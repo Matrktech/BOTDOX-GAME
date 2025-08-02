@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Dots and Boxes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #e2e8f0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .game-container {
+            background-color: #2d3748;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        canvas {
+            background-color: #4a5568;
+            border-radius: 0.75rem;
+            display: block;
+            margin-bottom: 1.5rem;
+            touch-action: none;
+        }
+
+        .status-area {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-bottom: 1.5rem;
+            font-size: 1.25rem;
+            font-weight: bold;
+            text-align: center;
+            flex-wrap: wrap;
+        }
+
+        .player-score {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            margin: 0.5rem;
+        }
+
+        .player-score.active {
+            background-color: #4299e1;
+            color: #2d3748;
+        }
+
+        .player-score.player1-color {
+            border: 2px solid #63b3ed;
+        }
+
+        .player-score.player2-color {
+            border: 2px solid #ed8936;
+        }
+
+        .current-turn-message {
+            margin-top: 1rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            min-height: 2rem;
+            text-align: center;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .game-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-out, box-shadow 0.2s ease-in-out;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            color: #2d3748;
+            background-color: #48bb78;
+        }
+        
+        .game-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .game-button.blue {
+            background-color: #63b3ed;
+        }
+
+        .game-button.red {
+            background-color: #f56565;
+        }
+
+        .game-button.yellow {
+            background-color: #ecc94b;
+        }
+
+        .game-button.green:hover {
+            background-color: #38a169;
+        }
+
+        .game-button.blue:hover {
+            background-color: #4299e1;
+        }
+        
+        .game-button.red:hover {
+            background-color: #e53e3e;
+        }
+
+        .game-button.yellow:hover {
+            background-color: #d69e2e;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .form-group input {
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 2px solid #4a5568;
+            background-color: #2d3748;
+            color: #e2e8f0;
+            font-size: 1rem;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #63b3ed;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #2d3748;
+            border: 2px solid #4a5568;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            max-width: 90%;
+            color: #e2e8f0;
+        }
+
+        .message-box-content {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .message-box-button {
+            background-color: #63b3ed;
+            color: #2d3748;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+            border: none;
+        }
+
+        .message-box-button:hover {
+            background-color: #4299e1;
+        }
+        
+        .lobby-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .lobby-table th, .lobby-table td {
+            text-align: left;
+            padding: 0.75rem;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        .lobby-table th {
+            font-weight: bold;
+            color: #a0aec0;
+        }
+        
+        .lobby-table tr:hover {
+            background-color: #4a5568;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="game-container">
+        <h1 class="text-4xl md:text-5xl font-extrabold mb-6 text-yellow-400">Multiplayer Dots and Boxes</h1>
+
+        <!-- Auth UI -->
+        <div id="authUI" class="w-full max-w-sm flex flex-col items-center gap-4">
+            <h2 class="text-2xl font-bold mb-2">Sign In or Register</h2>
+            <div class="form-group w-full">
+                <input type="email" id="emailInput" placeholder="Email" class="p-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-blue-500">
+                <input type="password" id="passwordInput" placeholder="Password" class="p-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-blue-500">
+                <input type="text" id="nameInput" placeholder="Player Name" class="p-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-blue-500">
+            </div>
+            <div class="button-group w-full">
+                <button id="signInButton" class="game-button blue w-full">Sign In</button>
+                <button id="registerButton" class="game-button yellow w-full">Register</button>
+            </div>
+            <p class="text-center text-gray-400 mt-4">Or play as a guest:</p>
+            <button id="signInAnonymouslyButton" class="game-button w-full">Play Anonymously</button>
+        </div>
+
+        <!-- Lobby UI -->
+        <div id="lobbyUI" class="hidden w-full flex flex-col items-center gap-4">
+            <h2 class="text-2xl font-bold">Game Lobby</h2>
+            <p id="userStatus" class="text-md text-gray-400"></p>
+            <div class="button-group w-full flex-col">
+                <button id="createGameButton" class="game-button blue w-full">Create a New Game</button>
+                <div class="flex items-center w-full gap-2 mt-4">
+                    <input type="text" id="gameIdInput" placeholder="Enter Game ID to Join" class="p-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-blue-500 flex-grow">
+                    <button id="joinGameButton" class="game-button green p-3">Join</button>
+                </div>
+            </div>
+            <h3 class="text-xl font-bold mt-6">Available Games</h3>
+            <table id="availableGamesTable" class="lobby-table">
+                <thead>
+                    <tr>
+                        <th>Game ID</th>
+                        <th>Player 1</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="availableGamesBody">
+                    <!-- Game list will be populated here -->
+                </tbody>
+            </table>
+            <button id="signOutButton" class="game-button red mt-4 w-full">Sign Out</button>
+        </div>
+
+        <!-- Game UI -->
+        <div id="gameUI" class="hidden flex flex-col items-center w-full">
+            <h2 id="gameIdDisplay" class="text-xl font-bold mb-2">Game ID: </h2>
+            <div class="status-area">
+                <div id="player1Score" class="player-score player1-color"></div>
+                <div id="player2Score" class="player-score player2-color"></div>
+            </div>
+            <div id="currentTurn" class="current-turn-message"></div>
+
+            <canvas id="gameCanvas" class="w-full max-w-md"></canvas>
+
+            <div class="button-group">
+                <button id="leaveGameButton" class="game-button red"><span>Leave Game</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Message Box -->
+    <div id="messageBox" class="message-box">
+        <div id="messageBoxContent" class="message-box-content"></div>
+        <button id="messageBoxButton" class="message-box-button">OK</button>
+    </div>
+
+    <script type="module">
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously, onAuthStateChanged, signOut, updateProfile, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where, addDoc, serverTimestamp, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        // Default Firebase configuration
+        const defaultFirebaseConfig = {
+            apiKey: "AIzaSyCLTj4BNDt9luZ6aDqoXeQqeECViBqkIGI",
+            authDomain: "dot-box-f6119.firebaseapp.com",
+            projectId: "dot-box-f6119",
+            storageBucket: "dot-box-f6119.firebasestorage.app",
+            messagingSenderId: "750722039791",
+            appId: "1:750722039791:web:d2a26f10eddbf108ca001a"
+        };
+        
+        let firebaseConfig;
+        try {
+            firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : defaultFirebaseConfig;
+        } catch (error) {
+            console.warn("Failed to parse Firebase config, using default:", error);
+            firebaseConfig = defaultFirebaseConfig;
+        }
+        
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // DOM Elements
+        const authUI = document.getElementById('authUI');
+        const emailInput = document.getElementById('emailInput');
+        const passwordInput = document.getElementById('passwordInput');
+        const nameInput = document.getElementById('nameInput');
+        const signInButton = document.getElementById('signInButton');
+        const registerButton = document.getElementById('registerButton');
+        const signInAnonymouslyButton = document.getElementById('signInAnonymouslyButton');
+        const signOutButton = document.getElementById('signOutButton');
+
+        const lobbyUI = document.getElementById('lobbyUI');
+        const userStatus = document.getElementById('userStatus');
+        const createGameButton = document.getElementById('createGameButton');
+        const gameIdInput = document.getElementById('gameIdInput');
+        const joinGameButton = document.getElementById('joinGameButton');
+        const availableGamesBody = document.getElementById('availableGamesBody');
+        
+        const gameUI = document.getElementById('gameUI');
+        const gameIdDisplay = document.getElementById('gameIdDisplay');
+        const player1ScoreDisplay = document.getElementById('player1Score');
+        const player2ScoreDisplay = document.getElementById('player2Score');
+        const currentTurnDisplay = document.getElementById('currentTurn');
+        const leaveGameButton = document.getElementById('leaveGameButton');
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const messageBox = document.getElementById('messageBox');
+        const messageBoxContent = document.getElementById('messageBoxContent');
+        const messageBoxButton = document.getElementById('messageBoxButton');
+
+        // Firebase variables
+        let app;
+        let db;
+        let auth;
+        let userId = null;
+        let userName = null;
+        let isAuthReady = false;
+        
+        // Game State Variables
+        let gameRef = null;
+        let gameId = null;
+        let unsubscribeFromGame = null;
+        let unsubscribeFromLobby = null; // New unsubscribe variable for the lobby
+        let currentPlayer = null;
+        let player1Name = null;
+        let player2Name = null;
+        let isPlayer1 = false;
+        let opponentName = null;
+        let player1Id = null;
+        let player2Id = null;
+
+
+        let GRID_COLS = 6;
+        let GRID_ROWS = 5;
+        const DOT_RADIUS = 8;
+        const LINE_THICKNESS = 4;
+        const DOT_COLOR = '#63b3ed';
+        const PLAYER1_LINE_COLOR = '#63b3ed';
+        const PLAYER2_LINE_COLOR = '#ed8936';
+        const BOX_FILL_COLOR_P1 = 'rgba(99, 179, 237, 0.2)';
+        const BOX_FILL_COLOR_P2 = 'rgba(237, 137, 54, 0.2)';
+        const HOVER_LINE_COLOR = 'rgba(255, 255, 255, 0.3)';
+
+        let dots = [];
+        let horizontalLines = [];
+        let verticalLines = [];
+        let boxes = [];
+        let playerScores = {};
+        let cellSize;
+        let offsetX, offsetY;
+        let isGameActive = false;
+
+        // --- Utility Functions ---
+
+        function showMessageBox(message) {
+            messageBoxContent.textContent = message;
+            messageBox.style.display = 'flex';
+        }
+
+        function hideMessageBox() {
+            messageBox.style.display = 'none';
+        }
+        
+        function updateUIAfterAuth() {
+            if (userId) {
+                authUI.classList.add('hidden');
+                lobbyUI.classList.remove('hidden');
+                userStatus.textContent = `Hello, ${userName}! Your User ID is: ${userId}`;
+                setupLobbyListener();
+            } else {
+                authUI.classList.remove('hidden');
+                lobbyUI.classList.add('hidden');
+                gameUI.classList.add('hidden');
+            }
+        }
+
+        // --- Firebase Functions ---
+
+        async function createNewGame() {
+            if (!isAuthReady || !userId) {
+                showMessageBox("You must be signed in to create a game.");
+                return;
+            }
+
+            try {
+                // The game document path will be public, accessible by anyone in the app
+                const gamesCollection = collection(db, `artifacts/${appId}/public/data/games`);
+                const newGameDoc = await addDoc(gamesCollection, {
+                    player1Id: userId,
+                    player1Name: userName,
+                    player2Id: null,
+                    player2Name: null,
+                    status: 'waiting',
+                    createdAt: serverTimestamp(),
+                    boardState: {
+                        horizontalLines: Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS - 1).fill(null)),
+                        verticalLines: Array(GRID_ROWS - 1).fill(null).map(() => Array(GRID_COLS).fill(null)),
+                        boxes: Array(GRID_ROWS - 1).fill(null).map(() => Array(GRID_COLS - 1).fill(null)),
+                        cols: GRID_COLS,
+                        rows: GRID_ROWS,
+                    },
+                    currentPlayerTurn: null,
+                    playerScores: {}
+                });
+
+                gameId = newGameDoc.id;
+                gameRef = doc(db, `artifacts/${appId}/public/data/games`, gameId);
+                isPlayer1 = true;
+                showMessageBox(`Game created! Share this ID with a friend: ${gameId}`);
+                setupGameListener();
+                displayGameUI();
+            } catch (e) {
+                console.error("Error creating new game:", e);
+                showMessageBox("Failed to create game. Please try again.");
+            }
+        }
+
+        async function joinExistingGame(idToJoin) {
+            if (!isAuthReady || !userId) {
+                showMessageBox("You must be signed in to join a game.");
+                return;
+            }
+
+            if (idToJoin === gameId) {
+                showMessageBox("You are already in this game.");
+                return;
+            }
+            
+            // Unsubscribe from lobby updates when joining a game
+            if (unsubscribeFromLobby) {
+                unsubscribeFromLobby();
+                unsubscribeFromLobby = null;
+            }
+
+            try {
+                const gameDocRef = doc(db, `artifacts/${appId}/public/data/games`, idToJoin);
+                const gameDoc = await getDoc(gameDocRef);
+
+                if (!gameDoc.exists()) {
+                    showMessageBox("Game not found.");
+                    return;
+                }
+
+                const gameData = gameDoc.data();
+                if (gameData.status !== 'waiting' || gameData.player1Id === userId) {
+                    showMessageBox("This game is not available to join.");
+                    return;
+                }
+                
+                await updateDoc(gameDocRef, {
+                    player2Id: userId,
+                    player2Name: userName,
+                    status: 'in-progress',
+                    currentPlayerTurn: gameData.player1Id, // Player 1 starts
+                });
+
+                gameId = idToJoin;
+                gameRef = gameDocRef;
+                isPlayer1 = false;
+                setupGameListener();
+                displayGameUI();
+            } catch (e) {
+                console.error("Error joining game:", e);
+                showMessageBox("Failed to join game. Please check the ID and try again.");
+            }
+        }
+        
+        async function leaveGame() {
+            if (gameId && userId) {
+                // If there's an active game, remove the player from it
+                try {
+                    const gameDocRef = doc(db, `artifacts/${appId}/public/data/games`, gameId);
+                    const gameDoc = await getDoc(gameDocRef);
+                    
+                    if(gameDoc.exists()) {
+                        const gameData = gameDoc.data();
+                        
+                        if (gameData.status === 'in-progress') {
+                            await updateDoc(gameDocRef, {
+                                status: 'finished',
+                                currentPlayerTurn: null
+                            });
+                            showMessageBox('Game ended because a player left.');
+                        }
+                        // Only delete if the user leaving is player 1 and no one else has joined
+                        if (gameData.player1Id === userId && !gameData.player2Id) {
+                             await deleteDoc(gameDocRef);
+                        } else if (gameData.player2Id === userId) {
+                            await updateDoc(gameDocRef, {
+                                player2Id: null,
+                                player2Name: null,
+                                status: 'waiting',
+                                currentPlayerTurn: null
+                            });
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error leaving game:", e);
+                }
+            }
+            // Clear local game state and UI
+            if (unsubscribeFromGame) {
+                unsubscribeFromGame();
+            }
+            gameId = null;
+            gameRef = null;
+            isPlayer1 = false;
+            isGameActive = false;
+            gameUI.classList.add('hidden');
+            lobbyUI.classList.remove('hidden');
+            drawGame(); // Clear canvas
+            setupLobbyListener(); // Re-subscribe to lobby updates
+        }
+
+        function setupLobbyListener() {
+            if (!isAuthReady || !userId) return;
+            
+            // If there is an existing listener, unsubscribe first to prevent duplicates
+            if (unsubscribeFromLobby) {
+                unsubscribeFromLobby();
+            }
+
+            const gamesCollection = collection(db, `artifacts/${appId}/public/data/games`);
+            // To avoid a "missing index" error, we fetch the entire collection and filter client-side.
+            unsubscribeFromLobby = onSnapshot(gamesCollection, (snapshot) => {
+                availableGamesBody.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const game = doc.data();
+                    if (game.status === 'waiting' && game.player1Id !== userId) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${doc.id}</td>
+                            <td>${game.player1Name}</td>
+                            <td><button class="game-button green p-2 text-sm" data-game-id="${doc.id}">Join</button></td>
+                        `;
+                        availableGamesBody.appendChild(row);
+                    }
+                });
+
+                document.querySelectorAll('#availableGamesBody button').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        joinExistingGame(e.target.dataset.gameId);
+                    });
+                });
+            }, (error) => {
+                console.error("Error getting available games:", error);
+            });
+        }
+        
+        function setupGameListener() {
+            if (!gameRef) return;
+
+            if (unsubscribeFromGame) {
+                unsubscribeFromGame();
+            }
+            
+            // Set up a real-time listener for the game document
+            unsubscribeFromGame = onSnapshot(gameRef, (doc) => {
+                if (doc.exists()) {
+                    const data = doc.data();
+                    updateGameState(data);
+                } else {
+                    // Game was deleted by the other player
+                    leaveGame();
+                    showMessageBox("The other player left and the game was deleted.");
+                }
+            }, (error) => {
+                console.error("Error listening to game state:", error);
+            });
+        }
+
+        function updateGameState(data) {
+            gameIdDisplay.textContent = `Game ID: ${gameId}`;
+            
+            player1Name = data.player1Name;
+            player2Name = data.player2Name;
+            player1Id = data.player1Id;
+            player2Id = data.player2Id;
+            
+            if (player2Name) {
+                opponentName = isPlayer1 ? player2Name : player1Name;
+            }
+
+            if (data.status === 'in-progress') {
+                isGameActive = true;
+                currentPlayer = (data.currentPlayerTurn === userId) ? userName : (data.currentPlayerTurn === player1Id ? player1Name : player2Name);
+                
+                // Update board state
+                horizontalLines = data.boardState.horizontalLines;
+                verticalLines = data.boardState.verticalLines;
+                boxes = data.boardState.boxes;
+                GRID_COLS = data.boardState.cols;
+                GRID_ROWS = data.boardState.rows;
+
+                playerScores = data.playerScores || {};
+                if (!playerScores[player1Name]) playerScores[player1Name] = 0;
+                if (player2Name && !playerScores[player2Name]) playerScores[player2Name] = 0;
+
+                initializeCanvas(); // Re-initialize canvas with new grid size
+                updateStatusDisplay();
+                drawGame();
+            } else if (data.status === 'waiting' && data.player2Id === null) {
+                isGameActive = false;
+                currentPlayer = null;
+                updateStatusDisplay();
+                drawGame();
+                showMessageBox(`Waiting for a second player to join. Game ID: ${gameId}`);
+            } else if (data.status === 'finished') {
+                isGameActive = false;
+                updateStatusDisplay();
+                drawGame();
+                checkForWinner(data.playerScores);
+            }
+        }
+        
+        async function updateLineAndTurn(lineData) {
+            if (!gameRef || !isGameActive) return;
+
+            if (currentPlayer !== userName) {
+                showMessageBox("It's not your turn!");
+                return;
+            }
+
+            try {
+                const gameDoc = await getDoc(gameRef);
+                const gameData = gameDoc.data();
+                const currentBoardState = gameData.boardState;
+                let newHorizontalLines = JSON.parse(JSON.stringify(currentBoardState.horizontalLines));
+                let newVerticalLines = JSON.parse(JSON.stringify(currentBoardState.verticalLines));
+                let newBoxes = JSON.parse(JSON.stringify(gameData.boardState.boxes));
+                let newScores = {...gameData.playerScores};
+
+                let didScore = false;
+
+                if (lineData.type === 'horizontal') {
+                    if (newHorizontalLines[lineData.r][lineData.c] === null) {
+                        newHorizontalLines[lineData.r][lineData.c] = userId;
+                        didScore = checkAndFillBoxes(lineData.r, lineData.c, 'horizontal', newBoxes, newScores, newHorizontalLines, newVerticalLines);
+                    } else {
+                        return;
+                    }
+                } else if (lineData.type === 'vertical') {
+                    if (newVerticalLines[lineData.r][lineData.c] === null) {
+                        newVerticalLines[lineData.r][lineData.c] = userId;
+                        didScore = checkAndFillBoxes(lineData.r, lineData.c, 'vertical', newBoxes, newScores, newHorizontalLines, newVerticalLines);
+                    } else {
+                        return;
+                    }
+                }
+                
+                const nextPlayerId = didScore ? gameData.currentPlayerTurn : (gameData.player1Id === userId ? gameData.player2Id : gameData.player1Id);
+                const totalBoxes = (GRID_COLS - 1) * (GRID_ROWS - 1);
+                const completedCount = getCompletedBoxesCount(newBoxes);
+                const newStatus = (completedCount === totalBoxes) ? 'finished' : 'in-progress';
+                
+                await updateDoc(gameRef, {
+                    boardState: {
+                        ...gameData.boardState,
+                        horizontalLines: newHorizontalLines,
+                        verticalLines: newVerticalLines,
+                        boxes: newBoxes
+                    },
+                    playerScores: newScores,
+                    currentPlayerTurn: nextPlayerId,
+                    status: newStatus,
+                });
+                
+            } catch (e) {
+                console.error("Error updating game state:", e);
+                showMessageBox("Failed to make a move. Please try again.");
+            }
+        }
+
+        // --- Game Logic Functions (from original file, adapted) ---
+        
+        function initializeCanvas() {
+            const containerWidth = canvas.parentElement.clientWidth - (2.5 * 16 * 2);
+            const maxCanvasWidth = Math.min(containerWidth, 500);
+            const idealCellSize = (maxCanvasWidth - (2 * DOT_RADIUS)) / (GRID_COLS - 1);
+            canvas.width = (GRID_COLS - 1) * idealCellSize + (2 * DOT_RADIUS);
+            canvas.height = (GRID_ROWS - 1) * idealCellSize + (2 * DOT_RADIUS);
+            cellSize = idealCellSize;
+            offsetX = DOT_RADIUS;
+            offsetY = DOT_RADIUS;
+
+            dots = [];
+            for (let r = 0; r < GRID_ROWS; r++) {
+                for (let c = 0; c < GRID_COLS; c++) {
+                    dots.push({ x: offsetX + c * cellSize, y: offsetY + r * cellSize });
+                }
+            }
+        }
+
+        function drawGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw completed boxes and their owner's first letter
+            if (boxes && boxes.length > 0) {
+                for (let r = 0; r < GRID_ROWS - 1; r++) {
+                    for (let c = 0; c < GRID_COLS - 1; c++) {
+                        const ownerId = boxes[r][c];
+                        if (ownerId) {
+                            const boxX = offsetX + c * cellSize + LINE_THICKNESS / 2;
+                            const boxY = offsetY + r * cellSize + LINE_THICKNESS / 2;
+                            const boxSize = cellSize - LINE_THICKNESS;
+                            ctx.fillStyle = (ownerId === player1Id) ? BOX_FILL_COLOR_P1 : BOX_FILL_COLOR_P2;
+                            ctx.fillRect(boxX, boxY, boxSize, boxSize);
+                            
+                            const ownerName = (ownerId === player1Id) ? player1Name : player2Name;
+                            if (ownerName) {
+                                ctx.fillStyle = '#e2e8f0';
+                                ctx.font = `${boxSize * 0.6}px 'Inter', sans-serif`;
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'middle';
+                                ctx.fillText(ownerName.charAt(0).toUpperCase(), boxX + boxSize / 2, boxY + boxSize / 2);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Draw existing lines
+            ctx.lineWidth = LINE_THICKNESS;
+            ctx.lineCap = 'round';
+            if (horizontalLines && horizontalLines.length > 0) {
+                for (let r = 0; r < GRID_ROWS; r++) {
+                    for (let c = 0; c < GRID_COLS - 1; c++) {
+                        if (horizontalLines[r][c]) {
+                            ctx.strokeStyle = horizontalLines[r][c] === player1Id ? PLAYER1_LINE_COLOR : PLAYER2_LINE_COLOR;
+                            ctx.beginPath();
+                            ctx.moveTo(dots[r * GRID_COLS + c].x, dots[r * GRID_COLS + c].y);
+                            ctx.lineTo(dots[r * GRID_COLS + c + 1].x, dots[r * GRID_COLS + c + 1].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+            if (verticalLines && verticalLines.length > 0) {
+                for (let r = 0; r < GRID_ROWS - 1; r++) {
+                    for (let c = 0; c < GRID_COLS; c++) {
+                        if (verticalLines[r][c]) {
+                            ctx.strokeStyle = verticalLines[r][c] === player1Id ? PLAYER1_LINE_COLOR : PLAYER2_LINE_COLOR;
+                            ctx.beginPath();
+                            ctx.moveTo(dots[r * GRID_COLS + c].x, dots[r * GRID_COLS + c].y);
+                            ctx.lineTo(dots[(r + 1) * GRID_COLS + c].x, dots[(r + 1) * GRID_COLS + c].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+
+            // Draw dots on top
+            ctx.fillStyle = DOT_COLOR;
+            dots.forEach(dot => {
+                ctx.beginPath();
+                ctx.arc(dot.x, dot.y, DOT_RADIUS, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+        
+        function updateStatusDisplay() {
+            player1ScoreDisplay.textContent = `${player1Name || 'Player 1'}: ${playerScores[player1Name] || 0}`;
+            player2ScoreDisplay.textContent = `${player2Name || 'Player 2'}: ${playerScores[player2Name] || 0}`;
+
+            player1ScoreDisplay.classList.toggle('active', currentPlayer === player1Name);
+            player2ScoreDisplay.classList.toggle('active', currentPlayer === player2Name);
+            
+            if (isGameActive && currentPlayer) {
+                currentTurnDisplay.textContent = `${currentPlayer}'s turn`;
+            } else if (!isGameActive && player2Name) {
+                currentTurnDisplay.textContent = "Game Over!";
+            } else {
+                currentTurnDisplay.textContent = "Waiting for game to start...";
+            }
+        }
+        
+        function handleMouseMove(event) {
+            if (!isGameActive || currentPlayer !== userName) return;
+
+            const rect = canvas.getBoundingClientRect();
+            let x, y;
+            if (event.touches) {
+                x = event.touches[0].clientX - rect.left;
+                y = event.touches[0].clientY - rect.top;
+            } else {
+                x = event.clientX - rect.left;
+                y = event.clientY - rect.top;
+            }
+
+            const lineData = findNearestLine(x, y);
+            drawGame(); // Redraw to clear previous hover line
+
+            if (lineData && lineData.owner === null) {
+                drawLine(lineData, HOVER_LINE_COLOR);
+            }
+        }
+        
+        function handleClick(event) {
+            if (!isGameActive || currentPlayer !== userName) return;
+
+            const rect = canvas.getBoundingClientRect();
+            let x, y;
+            if (event.touches) {
+                x = event.touches[0].clientX - rect.left;
+                y = event.touches[0].clientY - rect.top;
+            } else {
+                x = event.clientX - rect.left;
+                y = event.clientY - rect.top;
+            }
+
+            const lineData = findNearestLine(x, y);
+
+            if (lineData && lineData.owner === null) {
+                updateLineAndTurn(lineData);
+            }
+        }
+
+        function findNearestLine(x, y) {
+            const tolerance = 10;
+            const lineData = {};
+            // Check horizontal lines
+            for (let r = 0; r < GRID_ROWS; r++) {
+                for (let c = 0; c < GRID_COLS - 1; c++) {
+                    const dot1 = dots[r * GRID_COLS + c];
+                    const dot2 = dots[r * GRID_COLS + c + 1];
+                    const lineY = dot1.y;
+                    if (Math.abs(y - lineY) < tolerance && x > dot1.x && x < dot2.x) {
+                        lineData.type = 'horizontal';
+                        lineData.r = r;
+                        lineData.c = c;
+                        lineData.owner = horizontalLines[r][c];
+                        return lineData;
+                    }
+                }
+            }
+            // Check vertical lines
+            for (let r = 0; r < GRID_ROWS - 1; r++) {
+                for (let c = 0; c < GRID_COLS; c++) {
+                    const dot1 = dots[r * GRID_COLS + c];
+                    const dot2 = dots[(r + 1) * GRID_COLS + c];
+                    const lineX = dot1.x;
+                    if (Math.abs(x - lineX) < tolerance && y > dot1.y && y < dot2.y) {
+                        lineData.type = 'vertical';
+                        lineData.r = r;
+                        lineData.c = c;
+                        lineData.owner = verticalLines[r][c];
+                        return lineData;
+                    }
+                }
+            }
+            return null;
+        }
+
+        function drawLine(lineData, color) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = LINE_THICKNESS;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            if (lineData.type === 'horizontal') {
+                const dot1 = dots[lineData.r * GRID_COLS + lineData.c];
+                const dot2 = dots[lineData.r * GRID_COLS + lineData.c + 1];
+                ctx.moveTo(dot1.x, dot1.y);
+                ctx.lineTo(dot2.x, dot2.y);
+            } else {
+                const dot1 = dots[lineData.r * GRID_COLS + lineData.c];
+                const dot2 = dots[(lineData.r + 1) * GRID_COLS + lineData.c];
+                ctx.moveTo(dot1.x, dot1.y);
+                ctx.lineTo(dot2.x, dot2.y);
+            }
+            ctx.stroke();
+        }
+
+        // Updated checkAndFillBoxes to use the passed arrays
+        function checkAndFillBoxes(lineR, lineC, type, newBoxes, newScores, newHorizontalLines, newVerticalLines) {
+            let completedBox = false;
+            let currentName = userName;
+            
+            // Helper function to check if a box is complete
+            const isBoxComplete = (r, c) => {
+                if (r < 0 || r >= GRID_ROWS - 1 || c < 0 || c >= GRID_COLS - 1) return false;
+                
+                const hasTop = newHorizontalLines[r][c] !== null;
+                const hasBottom = newHorizontalLines[r+1][c] !== null;
+                const hasLeft = newVerticalLines[r][c] !== null;
+                const hasRight = newVerticalLines[r][c+1] !== null;
+                
+                return hasTop && hasBottom && hasLeft && hasRight;
+            };
+
+            const checkAndFill = (r, c) => {
+                if (isBoxComplete(r, c) && newBoxes[r][c] === null) {
+                    newBoxes[r][c] = userId;
+                    newScores[currentName] = (newScores[currentName] || 0) + 1;
+                    return true;
+                }
+                return false;
+            };
+
+            if (type === 'horizontal') {
+                // Check the box above the line
+                if (checkAndFill(lineR - 1, lineC)) completedBox = true;
+                // Check the box below the line
+                if (checkAndFill(lineR, lineC)) completedBox = true;
+            } else if (type === 'vertical') {
+                // Check the box to the left of the line
+                if (checkAndFill(lineR, lineC - 1)) completedBox = true;
+                // Check the box to the right of the line
+                if (checkAndFill(lineR, lineC)) completedBox = true;
+            }
+            
+            return completedBox;
+        }
+
+        function getCompletedBoxesCount(boxesArray) {
+            let count = 0;
+            for (let r = 0; r < GRID_ROWS - 1; r++) {
+                for (let c = 0; c < GRID_COLS - 1; c++) {
+                    if (boxesArray[r][c] !== null) {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        function checkForWinner(scores) {
+            const player1Score = scores[player1Name] || 0;
+            const player2Score = scores[player2Name] || 0;
+            
+            let message = '';
+            if (player1Score > player2Score) {
+                message = `${player1Name} wins with ${player1Score} points!`;
+            } else if (player2Score > player1Score) {
+                message = `${player2Name} wins with ${player2Score} points!`;
+            } else {
+                message = "It's a draw!";
+            }
+            showMessageBox(message);
+        }
+
+        function displayGameUI() {
+            lobbyUI.classList.add('hidden');
+            gameUI.classList.remove('hidden');
+            initializeCanvas();
+            drawGame();
+        }
+
+        // --- Event Listeners ---
+        messageBoxButton.addEventListener('click', hideMessageBox);
+
+        signInButton.addEventListener('click', async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            if (!email || !password) {
+                showMessageBox("Please enter email and password.");
+                return;
+            }
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                showMessageBox("Signed in successfully!");
+            } catch (error) {
+                let errorMessage = "Sign In Failed: ";
+                if (error.code === 'auth/user-not-found') {
+                    errorMessage += "No account found with this email.";
+                } else if (error.code === 'auth/wrong-password') {
+                    errorMessage += "Incorrect password.";
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage += "Invalid email address.";
+                } else if (error.code === 'auth/network-request-failed') {
+                    errorMessage += "Network error. Please check your connection.";
+                } else {
+                    errorMessage += error.message;
+                }
+                showMessageBox(errorMessage);
+            }
+        });
+
+        registerButton.addEventListener('click', async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            const name = nameInput.value;
+            if (!email || !password || !name) {
+                showMessageBox("Please enter email, password, and a name.");
+                return;
+            }
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(userCredential.user, { displayName: name });
+                showMessageBox("Registration successful! You are now signed in.");
+            } catch (error) {
+                let errorMessage = "Registration Failed: ";
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage += "An account with this email already exists.";
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage += "Password should be at least 6 characters.";
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage += "Invalid email address.";
+                } else if (error.code === 'auth/network-request-failed') {
+                    errorMessage += "Network error. Please check your connection.";
+                } else {
+                    errorMessage += error.message;
+                }
+                showMessageBox(errorMessage);
+            }
+        });
+
+        signInAnonymouslyButton.addEventListener('click', async () => {
+            try {
+                await signInAnonymously(auth);
+                showMessageBox("Signed in anonymously.");
+            } catch (error) {
+                let errorMessage = "Anonymous Sign In Failed: ";
+                if (error.code === 'auth/operation-not-allowed') {
+                    errorMessage += "Anonymous authentication is not enabled.";
+                } else if (error.code === 'auth/network-request-failed') {
+                    errorMessage += "Network error. Please check your connection.";
+                } else {
+                    errorMessage += error.message;
+                }
+                showMessageBox(errorMessage);
+            }
+        });
+
+        signOutButton.addEventListener('click', async () => {
+            await leaveGame();
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("Error signing out:", error);
+            }
+        });
+
+        createGameButton.addEventListener('click', createNewGame);
+        
+        joinGameButton.addEventListener('click', () => {
+            const id = gameIdInput.value.trim();
+            if (id) {
+                joinExistingGame(id);
+            } else {
+                showMessageBox("Please enter a game ID.");
+            }
+        });
+        
+        leaveGameButton.addEventListener('click', leaveGame);
+
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('mousedown', handleClick);
+        canvas.addEventListener('touchmove', handleMouseMove);
+        canvas.addEventListener('touchstart', handleClick);
+
+        // Responsive canvas
+        window.addEventListener('resize', () => {
+            if (gameUI.classList.contains('hidden') === false) {
+                initializeCanvas();
+                drawGame();
+            }
+        });
+        
+        // This function encapsulates the main initialization logic
+        async function init() {
+            try {
+                // Initialize Firebase
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Set up auth state listener
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        userName = user.displayName || `Guest-${user.uid.substring(0, 6)}`;
+                        isAuthReady = true;
+                        updateUIAfterAuth();
+                    } else {
+                        userId = null;
+                        userName = null;
+                        isAuthReady = true;
+                        updateUIAfterAuth();
+                    }
+                });
+
+                // Try to sign in with custom token if provided, otherwise sign in anonymously
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (authError) {
+                    console.warn("Authentication failed, continuing without auth:", authError);
+                    // Continue without authentication - user can still sign in manually
+                    isAuthReady = true;
+                    updateUIAfterAuth();
+                }
+            } catch (e) {
+                console.error("Firebase initialization error:", e);
+                
+                // Provide more specific error messages
+                let errorMessage = "Error initializing the application. ";
+                if (e.code === 'auth/network-request-failed') {
+                    errorMessage += "Network error. Please check your internet connection.";
+                } else if (e.code === 'auth/invalid-api-key') {
+                    errorMessage += "Invalid API key. Please check your Firebase configuration.";
+                } else if (e.code === 'auth/operation-not-allowed') {
+                    errorMessage += "Anonymous authentication is not enabled.";
+                } else {
+                    errorMessage += "Please try again later.";
+                }
+                
+                showMessageBox(errorMessage);
+                
+                // Set auth as ready even if Firebase fails, so user can still see the UI
+                isAuthReady = true;
+                updateUIAfterAuth();
+            }
+        }
+        
+        // Call init() when the window is fully loaded to ensure all DOM elements are available
+        window.onload = () => {
+            // Check if Firebase modules are available
+            if (typeof initializeApp === 'undefined') {
+                // Wait a bit for Firebase to load, then try again
+                setTimeout(() => {
+                    if (typeof initializeApp === 'undefined') {
+                        showMessageBox("Firebase SDK failed to load. Please refresh the page and try again.");
+                        return;
+                    }
+                    init();
+                }, 1000);
+            } else {
+                init();
+            }
+        };
+
+    </script>
+</body>
+</html>
