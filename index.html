@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multiplayer Dots and Boxes</title>
+    <!-- Inter font and Tailwind CSS -->
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -38,1194 +40,640 @@
             display: block;
             margin-bottom: 1.5rem;
             touch-action: none;
+            cursor: pointer;
         }
 
         .status-area {
-            display: flex;
-            justify-content: space-around;
             width: 100%;
+            text-align: center;
             margin-bottom: 1.5rem;
             font-size: 1.25rem;
-            font-weight: bold;
-            text-align: center;
-            flex-wrap: wrap;
+            font-weight: 600;
         }
 
-        .player-score {
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            margin: 0.5rem;
-        }
-
-        .player-score.active {
-            background-color: #4299e1;
-            color: #2d3748;
-        }
-
-        .player-score.player1-color {
-            border: 2px solid #63b3ed;
-        }
-
-        .player-score.player2-color {
-            border: 2px solid #ed8936;
-        }
-
-        .current-turn-message {
-            margin-top: 1rem;
-            font-size: 1.5rem;
-            font-weight: bold;
-            min-height: 2rem;
-            text-align: center;
-        }
-
-        .button-group {
+        .players-list {
             display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-            flex-wrap: wrap;
             justify-content: center;
-        }
-
-        .game-button {
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.75rem;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out, transform 0.1s ease-out, box-shadow 0.2s ease-in-out;
-            border: none;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-            position: relative;
-            overflow: hidden;
-            color: #2d3748;
-            background-color: #48bb78;
-        }
-        
-        .game-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        .game-button:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-        
-        .game-button.blue {
-            background-color: #63b3ed;
-        }
-
-        .game-button.red {
-            background-color: #f56565;
-        }
-
-        .game-button.yellow {
-            background-color: #ecc94b;
-        }
-
-        .game-button.green:hover {
-            background-color: #38a169;
-        }
-
-        .game-button.blue:hover {
-            background-color: #4299e1;
-        }
-        
-        .game-button.red:hover {
-            background-color: #e53e3e;
-        }
-
-        .game-button.yellow:hover {
-            background-color: #d69e2e;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
+            flex-wrap: wrap;
             gap: 1rem;
             width: 100%;
-            max-width: 350px;
-        }
-
-        .form-group input {
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            border: 2px solid #4a5568;
-            background-color: #2d3748;
-            color: #e2e8f0;
-            font-size: 1rem;
-        }
-        
-        .form-group input:focus {
-            outline: none;
-            border-color: #63b3ed;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .message-box {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #2d3748;
-            border: 2px solid #4a5568;
-            border-radius: 1rem;
-            padding: 2rem;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            max-width: 90%;
-            color: #e2e8f0;
-        }
-
-        .message-box-content {
-            font-size: 1.25rem;
             margin-bottom: 1.5rem;
         }
-        
-        .message-box-button {
-            background-color: #63b3ed;
-            color: #2d3748;
-            padding: 0.75rem 1.5rem;
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
             border-radius: 0.75rem;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out;
-            border: none;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        .message-box-button:hover {
-            background-color: #4299e1;
+        .player-info.active {
+            transform: scale(1.05);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
         }
         
-        .lobby-table {
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
             width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-
-        .lobby-table th, .lobby-table td {
-            text-align: left;
-            padding: 0.75rem;
-            border-bottom: 1px solid #4a5568;
-        }
-
-        .lobby-table th {
-            font-weight: bold;
-            color: #a0aec0;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            -webkit-backdrop-filter: blur(5px);
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
         }
         
-        .lobby-table tr:hover {
-            background-color: #4a5568;
+        .modal-content {
+            background-color: #2d3748;
+            margin: auto;
+            padding: 2.5rem;
+            border: 1px solid #4a5568;
+            border-radius: 1rem;
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loader {
+            border-top-color: #3498db;
+            animation: spinner 1.5s linear infinite;
         }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
 
-    <div class="game-container">
-        <h1 class="text-4xl md:text-5xl font-extrabold mb-6 text-yellow-400">Multiplayer Dots and Boxes</h1>
-
-        <!-- Auth UI -->
-        <div id="authUI" class="w-full max-w-sm flex flex-col items-center gap-4">
-            <h2 class="text-2xl font-bold mb-2">Sign In or Register</h2>
-            <div class="form-group w-full">
-                <input type="email" id="emailInput" placeholder="Email" class="p-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-blue-500">
-                <input type="password" id="passwordInput" placeholder="Password" class="p-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-blue-500">
-                <input type="text" id="nameInput" placeholder="Player Name" class="p-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-blue-500">
-            </div>
-            <div class="button-group w-full">
-                <button id="signInButton" class="game-button blue w-full">Sign In</button>
-                <button id="registerButton" class="game-button yellow w-full">Register</button>
-            </div>
-            <p class="text-center text-gray-400 mt-4">Or play as a guest:</p>
-            <button id="signInAnonymouslyButton" class="game-button w-full">Play Anonymously</button>
-        </div>
-
-        <!-- Lobby UI -->
-        <div id="lobbyUI" class="hidden w-full flex flex-col items-center gap-4">
-            <h2 class="text-2xl font-bold">Game Lobby</h2>
-            <p id="userStatus" class="text-md text-gray-400"></p>
-            <div class="button-group w-full flex-col">
-                <button id="createGameButton" class="game-button blue w-full">Create a New Game</button>
-                <div class="flex items-center w-full gap-2 mt-4">
-                    <input type="text" id="gameIdInput" placeholder="Enter Game ID to Join" class="p-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-blue-500 flex-grow">
-                    <button id="joinGameButton" class="game-button green p-3">Join</button>
-                </div>
-            </div>
-            
-            <div id="invitationContainer" class="w-full max-w-sm mt-4 hidden">
-                <h3 class="text-xl font-bold mb-2">Incoming Game Invitation</h3>
-                <div id="invitationMessage" class="bg-blue-800 p-4 rounded-lg flex flex-col items-center gap-2">
-                    <span id="invitingPlayerName" class="text-lg"></span>
-                    <div class="flex gap-2">
-                        <button id="acceptInviteButton" class="game-button green">Accept</button>
-                        <button id="declineInviteButton" class="game-button red">Decline</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="w-full mt-6">
-                <h3 class="text-xl font-bold">Online Players</h3>
-                <table id="onlinePlayersTable" class="lobby-table">
-                    <thead>
-                        <tr>
-                            <th>Player Name</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="onlinePlayersBody">
-                        <!-- Online players will be populated here -->
-                    </tbody>
-                </table>
-            </div>
-
-            <button id="signOutButton" class="game-button red mt-4 w-full">Sign Out</button>
-        </div>
-
-        <!-- Game UI -->
-        <div id="gameUI" class="hidden flex flex-col items-center w-full">
-            <h2 id="gameIdDisplay" class="text-xl font-bold mb-2">Game ID: </h2>
-            <div class="status-area">
-                <div id="player1Score" class="player-score player1-color"></div>
-                <div id="player2Score" class="player-score player2-color"></div>
-            </div>
-            <div id="currentTurn" class="current-turn-message"></div>
-
-            <canvas id="gameCanvas" class="w-full max-w-md"></canvas>
-
-            <div class="button-group">
-                <button id="leaveGameButton" class="game-button red"><span>Leave Game</span></button>
-            </div>
+    <div class="modal" id="message-modal">
+        <div class="modal-content">
+            <p id="modal-message" class="text-lg mb-4"></p>
+            <button onclick="document.getElementById('message-modal').style.display='none'" class="px-6 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors">
+                OK
+            </button>
         </div>
     </div>
 
-    <!-- Custom Message Box -->
-    <div id="messageBox" class="message-box">
-        <div id="messageBoxContent" class="message-box-content"></div>
-        <button id="messageBoxButton" class="message-box-button">OK</button>
+    <div id="game-ui" class="game-container hidden">
+        <h1 class="text-3xl font-bold mb-6 text-center">Multiplayer Dots and Boxes</h1>
+        
+        <div id="status-area" class="status-area"></div>
+        
+        <div id="players-list" class="players-list"></div>
+
+        <canvas id="game-canvas" class="w-full aspect-square md:w-[500px] md:h-[500px]"></canvas>
+
+        <div class="flex space-x-4">
+            <button id="new-game-button" class="px-6 py-3 bg-green-600 text-white font-semibold rounded-full shadow-md hover:bg-green-700 transition-transform transform hover:scale-105 active:scale-95">
+                New Game
+            </button>
+            <button id="leave-game-button" class="px-6 py-3 bg-red-600 text-white font-semibold rounded-full shadow-md hover:bg-red-700 transition-transform transform hover:scale-105 active:scale-95">
+                Leave Game
+            </button>
+        </div>
+    </div>
+
+    <div id="lobby-ui" class="game-container hidden">
+        <h1 class="text-3xl font-bold mb-6 text-center">Dots and Boxes Lobby</h1>
+        <p class="text-lg mb-4 text-center">Join an existing game or create a new one.</p>
+        
+        <div class="flex flex-col gap-4 w-full max-w-sm">
+            <input type="text" id="game-id-input" placeholder="Enter Game ID" class="w-full px-4 py-2 bg-gray-700 text-gray-100 rounded-lg border-gray-600 focus:outline-none focus:border-blue-500">
+            <button id="join-game-button" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-transform transform hover:scale-105 active:scale-95">
+                Join Game
+            </button>
+            <div class="text-center text-sm text-gray-400 mt-2">
+                <p>--- OR ---</p>
+            </div>
+            <button id="create-game-button" class="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 transition-transform transform hover:scale-105 active:scale-95">
+                Create New Game
+            </button>
+        </div>
+    </div>
+
+    <div id="loading-screen" class="game-container flex flex-col justify-center items-center">
+        <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4" style="border-top-color: #3498db; animation: spinner 1.5s linear infinite;"></div>
+        <p class="text-lg">Connecting to Firebase...</p>
     </div>
 
     <script type="module">
-        // --- Firebase imports ---
+        // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously, onAuthStateChanged, signOut, updateProfile, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where, addDoc, serverTimestamp, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global variables provided by the Canvas environment
+        // Global variables provided by the canvas environment
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCLTj4BNDt9luZ6aDqoXeQqeECViBqkIGI",
+            authDomain: "dot-box-f6119.firebaseapp.com",
+            projectId: "dot-box-f6119",
+            storageBucket: "dot-box-f6119.firebasestorage.app",
+            messagingSenderId: "750722039791",
+            appId: "1:750722039791:web:d2a26f10eddbf108ca001a"
+        };
+        
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        // DOM Elements
-        const authUI = document.getElementById('authUI');
-        const emailInput = document.getElementById('emailInput');
-        const passwordInput = document.getElementById('passwordInput');
-        const nameInput = document.getElementById('nameInput');
-        const signInButton = document.getElementById('signInButton');
-        const registerButton = document.getElementById('registerButton');
-        const signInAnonymouslyButton = document.getElementById('signInAnonymouslyButton');
-        const signOutButton = document.getElementById('signOutButton');
-
-        const lobbyUI = document.getElementById('lobbyUI');
-        const userStatus = document.getElementById('userStatus');
-        const createGameButton = document.getElementById('createGameButton');
-        const gameIdInput = document.getElementById('gameIdInput');
-        const joinGameButton = document.getElementById('joinGameButton');
-        const onlinePlayersBody = document.getElementById('onlinePlayersBody');
-        const invitationContainer = document.getElementById('invitationContainer');
-        const invitingPlayerName = document.getElementById('invitingPlayerName');
-        const acceptInviteButton = document.getElementById('acceptInviteButton');
-        const declineInviteButton = document.getElementById('declineInviteButton');
-        
-        const gameUI = document.getElementById('gameUI');
-        const gameIdDisplay = document.getElementById('gameIdDisplay');
-        const player1ScoreDisplay = document.getElementById('player1Score');
-        const player2ScoreDisplay = document.getElementById('player2Score');
-        const currentTurnDisplay = document.getElementById('currentTurn');
-        const leaveGameButton = document.getElementById('leaveGameButton');
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-
-        const messageBox = document.getElementById('messageBox');
-        const messageBoxContent = document.getElementById('messageBoxContent');
-        const messageBoxButton = document.getElementById('messageBoxButton');
-
-        // Firebase variables
-        let app;
-        let db;
-        let auth;
+        // Global variables for Firebase instances
+        let app = null;
+        let db = null;
+        let auth = null;
         let userId = null;
-        let userName = null;
         let isAuthReady = false;
-        
-        // Game State Variables
-        let gameRef = null;
-        let gameId = null;
-        let unsubscribeFromGame = null;
-        let unsubscribeFromLobby = null;
-        let unsubscribeFromOnlinePlayers = null;
-        let unsubscribeFromInvitations = null;
-        let currentPlayer = null;
-        let player1Name = null;
-        let player2Name = null;
-        let isPlayer1 = false;
-        let opponentName = null;
-        let player1Id = null;
-        let player2Id = null;
 
-
-        let GRID_COLS = 6;
-        let GRID_ROWS = 5;
-        const DOT_RADIUS = 8;
-        const LINE_THICKNESS = 4;
-        const DOT_COLOR = '#63b3ed';
-        const PLAYER1_LINE_COLOR = '#63b3ed';
-        const PLAYER2_LINE_COLOR = '#ed8936';
-        const BOX_FILL_COLOR_P1 = 'rgba(99, 179, 237, 0.2)';
-        const BOX_FILL_COLOR_P2 = 'rgba(237, 137, 54, 0.2)';
-        const HOVER_LINE_COLOR = 'rgba(255, 255, 255, 0.3)';
-
-        let dots = [];
-        let horizontalLines = [];
-        let verticalLines = [];
-        let boxes = [];
-        let playerScores = {};
+        // Game state variables
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const boardSize = 8;
         let cellSize;
-        let offsetX, offsetY;
-        let isGameActive = false;
-        let invitationGameId = null;
-        let heartbeatInterval = null;
-
-
-        // --- Utility Functions ---
-
+        let lines = [];
+        let boxes = [];
+        let players = [];
+        let currentPlayerIndex = 0;
+        let gameId = null;
+        let gameRef = null;
+        let unsubscriber = null;
+        let isMyTurn = false;
+        
+        // UI elements
+        const lobbyUi = document.getElementById('lobby-ui');
+        const gameUi = document.getElementById('game-ui');
+        const loadingScreen = document.getElementById('loading-screen');
+        const gameIdInput = document.getElementById('game-id-input');
+        const statusArea = document.getElementById('status-area');
+        const playersList = document.getElementById('players-list');
+        const newGameButton = document.getElementById('new-game-button');
+        const leaveGameButton = document.getElementById('leave-game-button');
+        const joinGameButton = document.getElementById('join-game-button');
+        const createGameButton = document.getElementById('create-game-button');
+        
+        // Show a modal message box instead of using alert()
         function showMessageBox(message) {
-            messageBoxContent.textContent = message;
-            messageBox.style.display = 'flex';
+            document.getElementById('modal-message').textContent = message;
+            document.getElementById('message-modal').style.display = 'flex';
         }
 
-        function hideMessageBox() {
-            messageBox.style.display = 'none';
-        }
-        
-        function updateUIAfterAuth() {
-            if (userId) {
-                authUI.classList.add('hidden');
-                lobbyUI.classList.remove('hidden');
-                userStatus.textContent = `Hello, ${userName}! Your User ID is: ${userId}`;
-                setupLobbyListeners();
-                startHeartbeat();
-            } else {
-                authUI.classList.remove('hidden');
-                lobbyUI.classList.add('hidden');
-                gameUI.classList.add('hidden');
-                stopHeartbeat();
-            }
-        }
-        
-        function startHeartbeat() {
-            if (heartbeatInterval) return;
-            heartbeatInterval = setInterval(async () => {
-                if (userId) {
-                    try {
-                        const userRef = doc(db, `artifacts/${appId}/public/data/onlineUsers`, userId);
-                        await setDoc(userRef, {
-                            userId: userId,
-                            userName: userName,
-                            lastSeen: serverTimestamp(),
-                        }, { merge: true });
-                    } catch (e) {
-                        console.error("Error updating heartbeat:", e);
-                    }
-                }
-            }, 30000); // Update every 30 seconds
-        }
+        // Set up the game board on window resize
+        window.addEventListener('resize', setupCanvas);
 
-        function stopHeartbeat() {
-            if (heartbeatInterval) {
-                clearInterval(heartbeatInterval);
-                heartbeatInterval = null;
-            }
-        }
-
-        // --- Firebase Functions ---
-
-        async function createNewGame(invitedPlayerId, invitedPlayerName) {
-            if (!isAuthReady || !userId) {
-                showMessageBox("You must be signed in to create a game.");
-                return;
-            }
-
-            try {
-                // The game document path will be public, accessible by anyone in the app
-                const gamesCollection = collection(db, `artifacts/${appId}/public/data/games`);
-                const newGameDoc = await addDoc(gamesCollection, {
-                    player1Id: userId,
-                    player1Name: userName,
-                    player2Id: invitedPlayerId,
-                    player2Name: invitedPlayerName,
-                    status: 'pending', // New status for invitation
-                    createdAt: serverTimestamp(),
-                    boardState: {
-                        horizontalLines: Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS - 1).fill(null)),
-                        verticalLines: Array(GRID_ROWS - 1).fill(null).map(() => Array(GRID_COLS).fill(null)),
-                        boxes: Array(GRID_ROWS - 1).fill(null).map(() => Array(GRID_COLS - 1).fill(null)),
-                        cols: GRID_COLS,
-                        rows: GRID_ROWS,
-                    },
-                    currentPlayerTurn: null,
-                    playerScores: {}
-                });
-
-                gameId = newGameDoc.id;
-                gameRef = doc(db, `artifacts/${appId}/public/data/games`, gameId);
-                isPlayer1 = true;
-                showMessageBox(`Invitation sent to ${invitedPlayerName}! Waiting for them to accept...`);
-                setupGameListener();
-                displayGameUI(false); // Do not show game board yet
-            } catch (e) {
-                console.error("Error creating new game:", e);
-                showMessageBox("Failed to create game. Please try again.");
-            }
-        }
-
-        async function joinExistingGame(idToJoin) {
-            if (!isAuthReady || !userId) {
-                showMessageBox("You must be signed in to join a game.");
-                return;
-            }
-
-            if (idToJoin === gameId) {
-                showMessageBox("You are already in this game.");
-                return;
-            }
-            
-            // Unsubscribe from lobby updates when joining a game
-            if (unsubscribeFromLobby) {
-                unsubscribeFromLobby();
-                unsubscribeFromLobby = null;
-            }
-
-            try {
-                const gameDocRef = doc(db, `artifacts/${appId}/public/data/games`, idToJoin);
-                const gameDoc = await getDoc(gameDocRef);
-
-                if (!gameDoc.exists()) {
-                    showMessageBox("Game not found.");
-                    return;
-                }
-
-                const gameData = gameDoc.data();
-                if (gameData.status !== 'waiting' || gameData.player1Id === userId) {
-                    showMessageBox("This game is not available to join.");
-                    return;
-                }
-                
-                await updateDoc(gameDocRef, {
-                    player2Id: userId,
-                    player2Name: userName,
-                    status: 'in-progress',
-                    currentPlayerTurn: gameData.player1Id, // Player 1 starts
-                });
-
-                gameId = idToJoin;
-                gameRef = gameDocRef;
-                isPlayer1 = false;
-                setupGameListener();
-                displayGameUI();
-            } catch (e) {
-                console.error("Error joining game:", e);
-                showMessageBox("Failed to join game. Please check the ID and try again.");
-            }
-        }
-        
-        async function leaveGame() {
-            if (gameId && userId) {
-                try {
-                    const gameDocRef = doc(db, `artifacts/${appId}/public/data/games`, gameId);
-                    const gameDoc = await getDoc(gameDocRef);
-                    
-                    if(gameDoc.exists()) {
-                        const gameData = gameDoc.data();
-                        
-                        if (gameData.status === 'in-progress' || gameData.status === 'pending') {
-                             await updateDoc(gameDocRef, {
-                                status: 'finished',
-                                currentPlayerTurn: null
-                            });
-                            showMessageBox('Game ended because a player left.');
-                        }
-                        // Only delete if the user leaving is player 1
-                        if (gameData.player1Id === userId) {
-                             await deleteDoc(gameDocRef);
-                        } else if (gameData.player2Id === userId) {
-                            // If player 2 leaves, just update the status
-                            await updateDoc(gameDocRef, {
-                                player2Id: null,
-                                player2Name: null,
-                                status: 'waiting',
-                                currentPlayerTurn: null
-                            });
-                        }
-                    }
-                } catch (e) {
-                    console.error("Error leaving game:", e);
-                }
-            }
-            // Clear local game state and UI
-            if (unsubscribeFromGame) {
-                unsubscribeFromGame();
-            }
-            gameId = null;
-            gameRef = null;
-            isPlayer1 = false;
-            isGameActive = false;
-            gameUI.classList.add('hidden');
-            lobbyUI.classList.remove('hidden');
-            drawGame(); // Clear canvas
-            setupLobbyListeners(); // Re-subscribe to lobby updates
-        }
-
-        async function deleteOnlineUserStatus() {
-            if (userId) {
-                try {
-                    const userDocRef = doc(db, `artifacts/${appId}/public/data/onlineUsers`, userId);
-                    await deleteDoc(userDocRef);
-                } catch (e) {
-                    console.error("Error deleting online status:", e);
-                }
-            }
-        }
-
-
-        function setupLobbyListeners() {
-            if (!isAuthReady || !userId) return;
-            
-            // Unsubscribe existing listeners to prevent duplicates
-            if (unsubscribeFromOnlinePlayers) unsubscribeFromOnlinePlayers();
-            if (unsubscribeFromInvitations) unsubscribeFromInvitations();
-
-            // Listen for online players
-            const onlineUsersCollection = collection(db, `artifacts/${appId}/public/data/onlineUsers`);
-            unsubscribeFromOnlinePlayers = onSnapshot(onlineUsersCollection, (snapshot) => {
-                onlinePlayersBody.innerHTML = '';
-                snapshot.forEach((doc) => {
-                    const user = doc.data();
-                    if (user.userId !== userId) { // Don't show current user in the list
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${user.userName}</td>
-                            <td><button class="game-button green p-2 text-sm invite-button" data-user-id="${user.userId}" data-user-name="${user.userName}">Invite</button></td>
-                        `;
-                        onlinePlayersBody.appendChild(row);
-                    }
-                });
-                document.querySelectorAll('.invite-button').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        const invitedPlayerId = e.target.dataset.userId;
-                        const invitedPlayerName = e.target.dataset.userName;
-                        createNewGame(invitedPlayerId, invitedPlayerName);
-                    });
-                });
-            }, (error) => {
-                console.error("Error getting online users:", error);
-            });
-
-            // Listen for incoming game invitations
-            const gamesCollection = collection(db, `artifacts/${appId}/public/data/games`);
-            const q = query(gamesCollection, where('player2Id', '==', userId), where('status', '==', 'pending'));
-            unsubscribeFromInvitations = onSnapshot(q, (snapshot) => {
-                if (!snapshot.empty) {
-                    const invitation = snapshot.docs[0].data();
-                    invitationGameId = snapshot.docs[0].id;
-                    invitingPlayerName.textContent = `Invitation from ${invitation.player1Name}`;
-                    invitationContainer.classList.remove('hidden');
-                } else {
-                    invitationContainer.classList.add('hidden');
-                    invitationGameId = null;
-                }
-            }, (error) => {
-                console.error("Error listening for invitations:", error);
-            });
-        }
-        
-        async function acceptInvitation() {
-            if (!invitationGameId) return;
-
-            try {
-                const gameDocRef = doc(db, `artifacts/${appId}/public/data/games`, invitationGameId);
-                const gameDoc = await getDoc(gameDocRef);
-
-                if (!gameDoc.exists()) {
-                    showMessageBox("Invitation no longer exists.");
-                    return;
-                }
-
-                const gameData = gameDoc.data();
-                if (gameData.status !== 'pending' || gameData.player2Id !== userId) {
-                    showMessageBox("This invitation is no longer valid.");
-                    return;
-                }
-
-                await updateDoc(gameDocRef, {
-                    status: 'in-progress',
-                    currentPlayerTurn: gameData.player1Id
-                });
-
-                gameId = invitationGameId;
-                gameRef = gameDocRef;
-                isPlayer1 = false;
-                setupGameListener();
-                displayGameUI();
-            } catch (e) {
-                console.error("Error accepting invitation:", e);
-                showMessageBox("Failed to accept invitation. Please try again.");
-            } finally {
-                invitationContainer.classList.add('hidden');
-                invitationGameId = null;
-            }
-        }
-        
-        async function declineInvitation() {
-            if (!invitationGameId) return;
-            try {
-                const gameDocRef = doc(db, `artifacts/${appId}/public/data/games`, invitationGameId);
-                await deleteDoc(gameDocRef);
-            } catch (e) {
-                console.error("Error declining invitation:", e);
-            } finally {
-                invitationContainer.classList.add('hidden');
-                invitationGameId = null;
-            }
-        }
-
-        function setupGameListener() {
-            if (!gameRef) return;
-            if (unsubscribeFromGame) {
-                unsubscribeFromGame();
-            }
-            // Set up a real-time listener for the game document
-            unsubscribeFromGame = onSnapshot(gameRef, (doc) => {
-                if (doc.exists()) {
-                    const data = doc.data();
-                    updateGameState(data);
-                } else {
-                    // Game was deleted by the other player
-                    leaveGame();
-                    showMessageBox("The other player left and the game was deleted.");
-                }
-            }, (error) => {
-                console.error("Error listening to game state:", error);
-            });
-        }
-
-        function updateGameState(data) {
-            gameIdDisplay.textContent = `Game ID: ${gameId}`;
-            player1Name = data.player1Name;
-            player2Name = data.player2Name;
-            player1Id = data.player1Id;
-            player2Id = data.player2Id;
-            
-            if (data.status === 'in-progress') {
-                isGameActive = true;
-                currentPlayer = (data.currentPlayerTurn === userId) ? userName : (data.currentPlayerTurn === player1Id ? player1Name : player2Name);
-
-                // Update board state
-                horizontalLines = data.boardState.horizontalLines;
-                verticalLines = data.boardState.verticalLines;
-                boxes = data.boardState.boxes;
-                GRID_COLS = data.boardState.cols;
-                GRID_ROWS = data.boardState.rows;
-                
-                playerScores = data.playerScores || {};
-                if (!playerScores[player1Name]) playerScores[player1Name] = 0;
-                if (player2Name && !playerScores[player2Name]) playerScores[player2Name] = 0;
-                
-                initializeCanvas(); // Re-initialize canvas with new grid size
-                updateStatusDisplay();
-                drawGame();
-                displayGameUI();
-            } else if (data.status === 'pending') {
-                isGameActive = false;
-                currentPlayer = null;
-                updateStatusDisplay();
-                drawGame();
-                displayGameUI(false); // Keep game board hidden
-                showMessageBox(`Waiting for ${player2Name} to accept your invitation.`);
-            } else if (data.status === 'finished') {
-                isGameActive = false;
-                updateStatusDisplay();
-                drawGame();
-                checkForWinner(data.playerScores);
-            }
-        }
-
-        async function updateLineAndTurn(lineData) {
-            if (!gameRef || !isGameActive) return;
-
-            if (currentPlayer !== userName) {
-                showMessageBox("It's not your turn!");
-                return;
-            }
-
-            try {
-                const gameDoc = await getDoc(gameRef);
-                const gameData = gameDoc.data();
-                const currentBoardState = gameData.boardState;
-                
-                let newHorizontalLines = JSON.parse(JSON.stringify(currentBoardState.horizontalLines));
-                let newVerticalLines = JSON.parse(JSON.stringify(currentBoardState.verticalLines));
-                let newBoxes = JSON.parse(JSON.stringify(gameData.boardState.boxes));
-                let newScores = {...gameData.playerScores};
-                
-                let didScore = false;
-
-                if (lineData.type === 'horizontal') {
-                    if (newHorizontalLines[lineData.r][lineData.c] === null) {
-                        newHorizontalLines[lineData.r][lineData.c] = userId;
-                        didScore = checkAndFillBoxes(lineData.r, lineData.c, 'horizontal', newBoxes, newScores, newHorizontalLines, newVerticalLines);
-                    } else {
-                        return;
-                    }
-                } else if (lineData.type === 'vertical') {
-                    if (newVerticalLines[lineData.r][lineData.c] === null) {
-                        newVerticalLines[lineData.r][lineData.c] = userId;
-                        didScore = checkAndFillBoxes(lineData.r, lineData.c, 'vertical', newBoxes, newScores, newHorizontalLines, newVerticalLines);
-                    } else {
-                        return;
-                    }
-                }
-                
-                const nextPlayerId = didScore ? gameData.currentPlayerTurn : (gameData.currentPlayerTurn === player1Id ? player2Id : player1Id);
-
-                await updateDoc(gameRef, {
-                    'boardState.horizontalLines': newHorizontalLines,
-                    'boardState.verticalLines': newVerticalLines,
-                    'boardState.boxes': newBoxes,
-                    playerScores: newScores,
-                    currentPlayerTurn: nextPlayerId
-                });
-
-            } catch (e) {
-                console.error("Error updating game state:", e);
-                showMessageBox("Failed to make a move. Please try again.");
-            }
-        }
-
-        function checkAndFillBoxes(r, c, type, newBoxes, newScores, newHorizontalLines, newVerticalLines) {
-            let scored = false;
-            const currentPlayerName = isPlayer1 ? player1Name : player2Name;
-
-            if (type === 'horizontal') {
-                // Check box above the line
-                if (r > 0) {
-                    if (newHorizontalLines[r-1][c] && newVerticalLines[r-1][c] && newVerticalLines[r-1][c+1]) {
-                        if (!newBoxes[r-1][c]) {
-                            newBoxes[r-1][c] = userId;
-                            newScores[currentPlayerName] = (newScores[currentPlayerName] || 0) + 1;
-                            scored = true;
-                        }
-                    }
-                }
-                // Check box below the line
-                if (r < GRID_ROWS - 1) {
-                    if (newHorizontalLines[r+1][c] && newVerticalLines[r][c] && newVerticalLines[r][c+1]) {
-                        if (!newBoxes[r][c]) {
-                            newBoxes[r][c] = userId;
-                            newScores[currentPlayerName] = (newScores[currentPlayerName] || 0) + 1;
-                            scored = true;
-                        }
-                    }
-                }
-            } else if (type === 'vertical') {
-                // Check box to the left of the line
-                if (c > 0) {
-                    if (newVerticalLines[r][c-1] && newHorizontalLines[r][c-1] && newHorizontalLines[r+1][c-1]) {
-                        if (!newBoxes[r][c-1]) {
-                            newBoxes[r][c-1] = userId;
-                            newScores[currentPlayerName] = (newScores[currentPlayerName] || 0) + 1;
-                            scored = true;
-                        }
-                    }
-                }
-                // Check box to the right of the line
-                if (c < GRID_COLS - 1) {
-                    if (newVerticalLines[r][c+1] && newHorizontalLines[r][c] && newHorizontalLines[r+1][c]) {
-                        if (!newBoxes[r][c]) {
-                            newBoxes[r][c] = userId;
-                            newScores[currentPlayerName] = (newScores[currentPlayerName] || 0) + 1;
-                            scored = true;
-                        }
-                    }
-                }
-            }
-            return scored;
-        }
-
-
-        // --- Game Drawing Functions ---
-
-        function initializeCanvas() {
-            const container = canvas.parentElement;
-            const size = Math.min(container.offsetWidth, window.innerHeight * 0.7); // Use a percentage of viewport height
+        function setupCanvas() {
+            const size = Math.min(canvas.parentElement.clientWidth, 500);
             canvas.width = size;
-            canvas.height = size * (GRID_ROWS / GRID_COLS);
-            cellSize = Math.min(canvas.width / GRID_COLS, canvas.height / GRID_ROWS);
-            offsetX = (canvas.width - cellSize * (GRID_COLS - 1)) / 2;
-            offsetY = (canvas.height - cellSize * (GRID_ROWS - 1)) / 2;
-
-            dots = [];
-            for (let r = 0; r < GRID_ROWS; r++) {
-                for (let c = 0; c < GRID_COLS; c++) {
-                    dots.push({x: offsetX + c * cellSize, y: offsetY + r * cellSize});
-                }
-            }
+            canvas.height = size;
+            cellSize = canvas.width / (boardSize);
+            draw();
         }
         
-        function drawGame() {
+        function draw() {
+            // Draw function to render the game state
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw boxes
-            for (let r = 0; r < GRID_ROWS - 1; r++) {
-                for (let c = 0; c < GRID_COLS - 1; c++) {
-                    const owner = boxes[r][c];
-                    if (owner) {
-                        ctx.fillStyle = owner === player1Id ? BOX_FILL_COLOR_P1 : BOX_FILL_COLOR_P2;
-                        ctx.fillRect(offsetX + c * cellSize, offsetY + r * cellSize, cellSize, cellSize);
-                    }
+            drawDots();
+            drawLines();
+            drawBoxes();
+        }
+
+        function drawDots() {
+            ctx.fillStyle = '#cbd5e0';
+            for (let i = 0; i < boardSize; i++) {
+                for (let j = 0; j < boardSize; j++) {
+                    ctx.beginPath();
+                    ctx.arc((i + 0.5) * cellSize, (j + 0.5) * cellSize, 4, 0, 2 * Math.PI);
+                    ctx.fill();
                 }
             }
+        }
 
-            // Draw horizontal lines
-            for (let r = 0; r < GRID_ROWS; r++) {
-                for (let c = 0; c < GRID_COLS - 1; c++) {
-                    const owner = horizontalLines[r][c];
-                    if (owner) {
-                        ctx.strokeStyle = owner === player1Id ? PLAYER1_LINE_COLOR : PLAYER2_LINE_COLOR;
-                        ctx.lineWidth = LINE_THICKNESS;
-                        ctx.beginPath();
-                        ctx.moveTo(offsetX + c * cellSize + DOT_RADIUS, offsetY + r * cellSize);
-                        ctx.lineTo(offsetX + (c + 1) * cellSize - DOT_RADIUS, offsetY + r * cellSize);
-                        ctx.stroke();
-                    }
-                }
-            }
-
-            // Draw vertical lines
-            for (let r = 0; r < GRID_ROWS - 1; r++) {
-                for (let c = 0; c < GRID_COLS; c++) {
-                    const owner = verticalLines[r][c];
-                    if (owner) {
-                        ctx.strokeStyle = owner === player1Id ? PLAYER1_LINE_COLOR : PLAYER2_LINE_COLOR;
-                        ctx.lineWidth = LINE_THICKNESS;
-                        ctx.beginPath();
-                        ctx.moveTo(offsetX + c * cellSize, offsetY + r * cellSize + DOT_RADIUS);
-                        ctx.lineTo(offsetX + c * cellSize, offsetY + (r + 1) * cellSize - DOT_RADIUS);
-                        ctx.stroke();
-                    }
-                }
-            }
-
-            // Draw dots last so they are on top
-            for (const dot of dots) {
-                ctx.fillStyle = DOT_COLOR;
+        function drawLines() {
+            ctx.lineWidth = 4;
+            lines.forEach(line => {
+                const color = players[line.playerIndex]?.color || '#a0aec0';
+                ctx.strokeStyle = color;
                 ctx.beginPath();
-                ctx.arc(dot.x, dot.y, DOT_RADIUS, 0, 2 * Math.PI);
-                ctx.fill();
-            }
-        }
-
-        function drawHoverLine(lineData) {
-            drawGame(); // Clear and redraw the board first
-            if (!lineData || !isGameActive) return;
-            
-            ctx.strokeStyle = HOVER_LINE_COLOR;
-            ctx.lineWidth = LINE_THICKNESS;
-            ctx.beginPath();
-            
-            if (lineData.type === 'horizontal') {
-                ctx.moveTo(offsetX + lineData.c * cellSize + DOT_RADIUS, offsetY + lineData.r * cellSize);
-                ctx.lineTo(offsetX + (lineData.c + 1) * cellSize - DOT_RADIUS, offsetY + lineData.r * cellSize);
-            } else {
-                ctx.moveTo(offsetX + lineData.c * cellSize, offsetY + lineData.r * cellSize + DOT_RADIUS);
-                ctx.lineTo(offsetX + lineData.c * cellSize, offsetY + (lineData.r + 1) * cellSize - DOT_RADIUS);
-            }
-            
-            ctx.stroke();
-        }
-
-        function getClickedLine(x, y) {
-            if (!isGameActive) return null;
-
-            // Check for horizontal lines
-            for (let r = 0; r < GRID_ROWS; r++) {
-                for (let c = 0; c < GRID_COLS - 1; c++) {
-                    const lineX = offsetX + (c * cellSize) + DOT_RADIUS;
-                    const lineY = offsetY + (r * cellSize);
-                    
-                    if (horizontalLines[r][c] === null && x > lineX && x < lineX + cellSize - (2 * DOT_RADIUS) && Math.abs(y - lineY) < LINE_THICKNESS * 2) {
-                        return { type: 'horizontal', r, c };
-                    }
-                }
-            }
-            
-            // Check for vertical lines
-            for (let r = 0; r < GRID_ROWS - 1; r++) {
-                for (let c = 0; c < GRID_COLS; c++) {
-                    const lineX = offsetX + c * cellSize;
-                    const lineY = offsetY + (r * cellSize) + DOT_RADIUS;
-
-                    if (verticalLines[r][c] === null && Math.abs(x - lineX) < LINE_THICKNESS * 2 && y > lineY && y < lineY + cellSize - (2 * DOT_RADIUS)) {
-                        return { type: 'vertical', r, c };
-                    }
-                }
-            }
-            return null;
-        }
-
-        function updateStatusDisplay() {
-            player1ScoreDisplay.textContent = `${player1Name || 'Player 1'}: ${playerScores[player1Name] || 0}`;
-            player2ScoreDisplay.textContent = `${player2Name || 'Player 2'}: ${playerScores[player2Name] || 0}`;
-            
-            player1ScoreDisplay.classList.remove('active');
-            player2ScoreDisplay.classList.remove('active');
-
-            if (isGameActive) {
-                if (currentPlayer === player1Name) {
-                    player1ScoreDisplay.classList.add('active');
-                } else if (currentPlayer === player2Name) {
-                    player2ScoreDisplay.classList.add('active');
-                }
-                currentTurnDisplay.textContent = `It's ${currentPlayer}'s turn.`;
-            } else {
-                currentTurnDisplay.textContent = '';
-            }
-        }
-        
-        function checkForWinner(scores) {
-            const totalBoxes = (GRID_ROWS - 1) * (GRID_COLS - 1);
-            const p1Score = scores[player1Name] || 0;
-            const p2Score = scores[player2Name] || 0;
-            
-            if (p1Score + p2Score === totalBoxes) {
-                if (p1Score > p2Score) {
-                    showMessageBox(`Game Over! ${player1Name} wins with ${p1Score} to ${p2Score}.`);
-                } else if (p2Score > p1Score) {
-                    showMessageBox(`Game Over! ${player2Name} wins with ${p2Score} to ${p1Score}.`);
+                if (line.isVertical) {
+                    ctx.moveTo((line.x + 1) * cellSize, line.y * cellSize);
+                    ctx.lineTo((line.x + 1) * cellSize, (line.y + 1) * cellSize);
                 } else {
-                    showMessageBox(`Game Over! It's a tie!`);
+                    ctx.moveTo(line.x * cellSize, (line.y + 1) * cellSize);
+                    ctx.lineTo((line.x + 1) * cellSize, (line.y + 1) * cellSize);
                 }
-            }
-        }
-        
-        function displayGameUI(showCanvas = true) {
-            lobbyUI.classList.add('hidden');
-            gameUI.classList.remove('hidden');
-            if (showCanvas) {
-                canvas.style.display = 'block';
-            } else {
-                canvas.style.display = 'none';
-            }
+                ctx.stroke();
+            });
         }
 
-        // --- Event Listeners and Initialization ---
+        function drawBoxes() {
+            boxes.forEach(box => {
+                const color = players[box.playerIndex]?.color || '#a0aec0';
+                ctx.fillStyle = color;
+                ctx.globalAlpha = 0.5;
+                ctx.fillRect(box.x * cellSize + 5, box.y * cellSize + 5, cellSize - 10, cellSize - 10);
+                ctx.globalAlpha = 1.0;
+            });
+        }
 
-        messageBoxButton.addEventListener('click', hideMessageBox);
+        // Handle user input
+        canvas.addEventListener('pointerdown', handleInput);
 
-        signInButton.addEventListener('click', async () => {
-            const email = emailInput.value;
-            const password = passwordInput.value;
-            if (email && password) {
-                try {
-                    await signInWithEmailAndPassword(auth, email, password);
-                } catch (e) {
-                    console.error("Sign in error:", e);
-                    showMessageBox(e.message);
-                }
-            } else {
-                showMessageBox("Please enter both email and password.");
-            }
-        });
+        function handleInput(e) {
+            if (!isAuthReady || !isMyTurn || players.length < 2) return;
 
-        registerButton.addEventListener('click', async () => {
-            const email = emailInput.value;
-            const password = passwordInput.value;
-            const name = nameInput.value;
-            if (email && password && name) {
-                try {
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    await updateProfile(userCredential.user, { displayName: name });
-                } catch (e) {
-                    console.error("Registration error:", e);
-                    showMessageBox(e.message);
-                }
-            } else {
-                showMessageBox("Please enter email, password, and a player name.");
-            }
-        });
-        
-        signInAnonymouslyButton.addEventListener('click', async () => {
-            try {
-                await signInAnonymously(auth);
-            } catch (e) {
-                console.error("Anonymous sign-in error:", e);
-                showMessageBox(e.message);
-            }
-        });
-        
-        signOutButton.addEventListener('click', async () => {
-            try {
-                // Also leave the game if a user is signed out
-                await leaveGame();
-                await deleteOnlineUserStatus(); // Remove user from online list
-                await signOut(auth);
-            } catch (e) {
-                console.error("Sign out error:", e);
-                showMessageBox(e.message);
-            }
-        });
-        
-        // This button is no longer used for starting a game, but we keep it
-        // for manual joining by ID.
-        createGameButton.addEventListener('click', () => showMessageBox("Please invite an online player to start a game."));
-
-        joinGameButton.addEventListener('click', () => {
-            const gameIdToJoin = gameIdInput.value.trim();
-            if (gameIdToJoin) {
-                joinExistingGame(gameIdToJoin);
-            } else {
-                showMessageBox("Please enter a Game ID.");
-            }
-        });
-        
-        acceptInviteButton.addEventListener('click', acceptInvitation);
-        declineInviteButton.addEventListener('click', declineInvitation);
-        
-        leaveGameButton.addEventListener('click', leaveGame);
-
-        canvas.addEventListener('mousemove', (e) => {
-            if (isGameActive && currentPlayer === userName) {
-                const rect = canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                const lineData = getClickedLine(x, y);
-                drawHoverLine(lineData);
-            }
-        });
-
-        canvas.addEventListener('mouseleave', () => {
-            if (isGameActive) {
-                drawGame();
-            }
-        });
-
-        canvas.addEventListener('click', (e) => {
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
-            const lineData = getClickedLine(x, y);
-            if (lineData) {
-                updateLineAndTurn(lineData);
-            }
-        });
-        
-        // Handle window resize to keep canvas responsive
-        window.addEventListener('resize', () => {
-            if (isGameActive) {
-                initializeCanvas();
-                drawGame();
-            }
-        });
-        
-        window.addEventListener('beforeunload', async () => {
-            await deleteOnlineUserStatus();
-        });
 
+            const gridX = Math.floor(x / cellSize);
+            const gridY = Math.floor(y / cellSize);
+
+            const isHorizontalLine = Math.abs(y - (gridY + 1) * cellSize) < Math.abs(x - (gridX + 1) * cellSize);
+
+            let line = null;
+            if (isHorizontalLine) {
+                // Horizontal line
+                if (gridY >= boardSize - 1) return;
+                line = { x: gridX, y: gridY, isVertical: false };
+            } else {
+                // Vertical line
+                if (gridX >= boardSize - 1) return;
+                line = { x: gridX, y: gridY, isVertical: true };
+            }
+
+            if (lineExists(line)) return;
+
+            // Update game state
+            const newLines = [...lines, { ...line, playerIndex: currentPlayerIndex }];
+            const newBoxes = [...boxes];
+            let newBoxesMade = false;
+
+            // Check for new boxes
+            const checkAndAddBox = (bx, by) => {
+                if (bx < 0 || by < 0 || bx >= boardSize - 1 || by >= boardSize - 1) return;
+
+                const top = newLines.some(l => !l.isVertical && l.x === bx && l.y === by);
+                const bottom = newLines.some(l => !l.isVertical && l.x === bx && l.y === by + 1);
+                const left = newLines.some(l => l.isVertical && l.x === bx && l.y === by);
+                const right = newLines.some(l => l.isVertical && l.x === bx + 1 && l.y === by);
+
+                if (top && bottom && left && right && !boxes.some(b => b.x === bx && b.y === by)) {
+                    newBoxes.push({ x: bx, y: by, playerIndex: currentPlayerIndex });
+                    newBoxesMade = true;
+                }
+            };
+            
+            if (line.isVertical) {
+                checkAndAddBox(line.x - 1, line.y);
+                checkAndAddBox(line.x, line.y);
+            } else {
+                checkAndAddBox(line.x, line.y - 1);
+                checkAndAddBox(line.x, line.y);
+            }
+            
+            const nextPlayerIndex = newBoxesMade ? currentPlayerIndex : (currentPlayerIndex + 1) % players.length;
+
+            updateGameStateInFirestore(newLines, newBoxes, nextPlayerIndex);
+        }
+
+        function lineExists(line) {
+            return lines.some(l => 
+                l.x === line.x && 
+                l.y === line.y && 
+                l.isVertical === line.isVertical
+            );
+        }
+        
+        async function updateGameStateInFirestore(newLines, newBoxes, nextPlayerIndex) {
+            if (!gameRef) return;
+            try {
+                await updateDoc(gameRef, {
+                    lines: JSON.stringify(newLines),
+                    boxes: JSON.stringify(newBoxes),
+                    currentPlayerIndex: nextPlayerIndex,
+                    lastMoveTime: Date.now()
+                });
+            } catch (e) {
+                console.error("Error updating game state:", e);
+                showMessageBox("Failed to update game state. Please check your connection.");
+            }
+        }
+        
+        function updateUI(gameState) {
+            // Deserialize the JSON string data
+            lines = JSON.parse(gameState.lines || '[]');
+            boxes = JSON.parse(gameState.boxes || '[]');
+            players = gameState.players || [];
+            currentPlayerIndex = gameState.currentPlayerIndex || 0;
+            
+            draw();
+            
+            updateStatusText();
+            updatePlayersList();
+        }
+        
+        function updateStatusText() {
+            if (players.length < 2) {
+                statusArea.textContent = 'Waiting for another player...';
+                statusArea.className = 'status-area text-yellow-400';
+                isMyTurn = false;
+            } else {
+                const currentPlayer = players[currentPlayerIndex];
+                isMyTurn = currentPlayer.id === userId;
+                if (isMyTurn) {
+                    statusArea.textContent = `Your turn! Click on a line to make a move.`;
+                    statusArea.className = 'status-area text-green-400 font-bold';
+                } else {
+                    statusArea.textContent = `${currentPlayer.name}'s turn.`;
+                    statusArea.className = 'status-area text-blue-400';
+                }
+            }
+        }
+        
+        function updatePlayersList() {
+            playersList.innerHTML = '';
+            players.forEach((player, index) => {
+                const isActive = index === currentPlayerIndex;
+                const isMe = player.id === userId;
+                const playerEl = document.createElement('div');
+                playerEl.className = `player-info rounded-xl ${isActive ? 'bg-blue-800' : 'bg-gray-700'} ${isMe ? 'ring-2 ring-yellow-400' : ''}`;
+                
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.style.backgroundColor = player.color;
+                
+                const name = document.createElement('span');
+                name.textContent = `${player.name}${isMe ? ' (You)' : ''}: ${player.score}`;
+
+                playerEl.appendChild(dot);
+                playerEl.appendChild(name);
+                playersList.appendChild(playerEl);
+            });
+        }
+        
+        async function joinGame(gameIdToJoin) {
+            loadingScreen.classList.remove('hidden');
+            lobbyUi.classList.add('hidden');
+            
+            const gameDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'games', gameIdToJoin);
+            const gameDoc = await getDoc(gameDocRef);
+
+            if (!gameDoc.exists()) {
+                showMessageBox("Game not found. Please check the ID.");
+                loadingScreen.classList.add('hidden');
+                lobbyUi.classList.remove('hidden');
+                return;
+            }
+            
+            const gameState = gameDoc.data();
+            const existingPlayers = gameState.players || [];
+
+            if (existingPlayers.length >= 2) {
+                showMessageBox("This game is already full. Please join or create another one.");
+                loadingScreen.classList.add('hidden');
+                lobbyUi.classList.remove('hidden');
+                return;
+            }
+
+            const myName = `Player ${existingPlayers.length + 1}`;
+            const myColor = existingPlayers.length === 0 ? '#4299e1' : '#f56565';
+            const newPlayer = { id: userId, name: myName, color: myColor, score: 0 };
+            
+            const updatedPlayers = [...existingPlayers, newPlayer];
+
+            try {
+                await updateDoc(gameDocRef, { players: updatedPlayers });
+                gameId = gameIdToJoin;
+                gameRef = gameDocRef;
+                setupGameListener();
+                
+                loadingScreen.classList.add('hidden');
+                gameUi.classList.remove('hidden');
+                showMessageBox(`Successfully joined game: ${gameId}`);
+                
+            } catch (e) {
+                console.error("Error joining game:", e);
+                showMessageBox("Failed to join game. Please try again.");
+                loadingScreen.classList.add('hidden');
+                lobbyUi.classList.remove('hidden');
+            }
+        }
+        
+        async function createGame() {
+            loadingScreen.classList.remove('hidden');
+            lobbyUi.classList.add('hidden');
+            
+            try {
+                const newGameRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'games'), {
+                    lines: JSON.stringify([]),
+                    boxes: JSON.stringify([]),
+                    players: [],
+                    currentPlayerIndex: 0,
+                    lastMoveTime: Date.now()
+                });
+                
+                gameId = newGameRef.id;
+                gameRef = newGameRef;
+                showMessageBox(`New game created! Game ID: ${gameId}\n\nClick OK to copy the ID to clipboard.`);
+                
+                // Copy game ID to clipboard
+                try {
+                    await navigator.clipboard.writeText(gameId);
+                } catch (e) {
+                    console.warn("Could not copy to clipboard:", e);
+                }
+                joinGame(gameId); // Automatically join the game you created
+            } catch (e) {
+                console.error("Error creating game:", e);
+                showMessageBox("Failed to create a new game. Please try again.");
+                loadingScreen.classList.add('hidden');
+                lobbyUi.classList.remove('hidden');
+            }
+        }
+        
+        function setupGameListener() {
+            if (unsubscriber) {
+                unsubscriber();
+            }
+            unsubscriber = onSnapshot(gameRef, (doc) => {
+                const gameState = doc.data();
+                if (gameState) {
+                    // Check if a player made a box and update scores
+                    const newBoxes = JSON.parse(gameState.boxes || '[]');
+                    const oldBoxes = boxes;
+                    if (newBoxes.length > oldBoxes.length) {
+                         const playersInState = gameState.players || [];
+                         const updatedPlayers = playersInState.map(p => {
+                            const newScore = newBoxes.filter(box => box.playerIndex === playersInState.findIndex(player => player.id === p.id)).length;
+                            return { ...p, score: newScore };
+                        });
+                        updateDoc(gameRef, { players: updatedPlayers });
+                    }
+                    updateUI(gameState);
+                } else {
+                    showMessageBox("The game has ended or been deleted.");
+                    resetGameState();
+                    lobbyUi.classList.remove('hidden');
+                    gameUi.classList.add('hidden');
+                    loadingScreen.classList.add('hidden');
+                }
+            });
+        }
+        
+        function resetGameState() {
+            gameId = null;
+            gameRef = null;
+            if (unsubscriber) {
+                unsubscriber();
+                unsubscriber = null;
+            }
+            lines = [];
+            boxes = [];
+            players = [];
+            currentPlayerIndex = 0;
+            isMyTurn = false;
+            updateStatusText();
+            updatePlayersList();
+            draw();
+            gameIdInput.value = '';
+        }
+        
+        async function leaveGame() {
+            if (gameRef) {
+                try {
+                    // Remove my player from the game
+                    const gameDoc = await getDoc(gameRef);
+                    const gameState = gameDoc.data();
+                    const updatedPlayers = (gameState.players || []).filter(p => p.id !== userId);
+
+                    if (updatedPlayers.length === 0) {
+                         // If no players are left, delete the game document
+                         await deleteDoc(gameRef);
+                    } else {
+                         // Otherwise, just update the players list
+                         await updateDoc(gameRef, { players: updatedPlayers });
+                    }
+                } catch (e) {
+                    console.error("Failed to leave game:", e);
+                }
+            }
+            resetGameState();
+            lobbyUi.classList.remove('hidden');
+            gameUi.classList.add('hidden');
+        }
+        
+        function initListeners() {
+            joinGameButton.addEventListener('click', () => {
+                const id = gameIdInput.value.trim();
+                if (id) {
+                    joinGame(id);
+                } else {
+                    showMessageBox("Please enter a valid Game ID.");
+                }
+            });
+
+            createGameButton.addEventListener('click', createGame);
+
+            leaveGameButton.addEventListener('click', leaveGame);
+
+            newGameButton.addEventListener('click', leaveGame);
+        }
 
         // Main initialization function
         async function init() {
             try {
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                
-                // Use onAuthStateChanged to manage user state and UI
+                // Check if Firebase modules are available
+                if (typeof initializeApp === 'undefined') {
+                    setTimeout(() => {
+                        if (typeof initializeApp === 'undefined') {
+                            showMessageBox("Firebase SDK failed to load. Please refresh the page and try again.");
+                            loadingScreen.classList.add('hidden');
+                            lobbyUi.classList.remove('hidden');
+                            return;
+                        }
+                        init();
+                    }, 1000);
+                    return;
+                }
+
+                // Ensure Firebase is not already initialized
+                if (!app) {
+                    app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+                }
+
+                // Listen for authentication state changes
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         userId = user.uid;
-                        userName = user.displayName || 'Anonymous Player';
-
-                        if (initialAuthToken) {
-                            try {
-                                await signInWithCustomToken(auth, initialAuthToken);
-                            } catch (error) {
-                                console.error("Error signing in with custom token:", error);
-                            }
-                        } else {
-                            if (!user.isAnonymous) {
-                                await signInAnonymously(auth);
-                                userName = 'Anonymous Player';
-                            }
-                        }
-                        
-                        // Register user as online
-                        const userRef = doc(db, `artifacts/${appId}/public/data/onlineUsers`, userId);
-                        await setDoc(userRef, {
-                            userId: userId,
-                            userName: userName,
-                            lastSeen: serverTimestamp(),
-                        });
                     } else {
-                        userId = null;
-                        userName = null;
+                        userId = crypto.randomUUID(); // For anonymous sign-in
                     }
-                    isAuthReady = true;
-                    updateUIAfterAuth();
+                    
+                    if (!isAuthReady) {
+                        isAuthReady = true;
+                        initListeners();
+                        setupCanvas();
+                        loadingScreen.classList.add('hidden');
+                        lobbyUi.classList.remove('hidden');
+                    }
                 });
+
+                // Sign in with the provided token or anonymously
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (authError) {
+                    console.warn("Authentication failed, continuing without auth:", authError);
+                    // Continue without authentication - user can still play
+                    isAuthReady = true;
+                    loadingScreen.classList.add('hidden');
+                    lobbyUi.classList.remove('hidden');
+                }
 
             } catch (e) {
                 console.error("Firebase initialization error:", e);
-                let errorMessage = "Error initializing the application. Please try again later.";
-                if (e.code) {
-                    if (e.code === 'auth/network-request-failed') {
-                        errorMessage += "Network error. Please check your internet connection.";
-                    } else if (e.code === 'auth/invalid-api-key') {
-                        errorMessage += "Invalid API key. Please check your Firebase configuration.";
-                    } else if (e.code === 'auth/operation-not-allowed') {
-                        errorMessage += "Anonymous authentication is not enabled.";
-                    } else {
-                        errorMessage += "Please try again later.";
-                    }
+                let errorMessage = "An error occurred during initialization: ";
+                if (e.code === 'auth/network-request-failed') {
+                    errorMessage += "Network error. Please check your internet connection.";
+                } else if (e.code === 'auth/invalid-api-key') {
+                    errorMessage += "Invalid API key. Please check your Firebase configuration.";
+                } else if (e.code === 'auth/operation-not-allowed') {
+                    errorMessage += "Anonymous authentication is not enabled.";
+                } else {
+                    errorMessage += "Please try again later.";
                 }
                 
                 showMessageBox(errorMessage);
                 
+                // Set auth as ready even if Firebase fails, so user can still see the UI
                 isAuthReady = true;
-                updateUIAfterAuth();
+                loadingScreen.classList.add('hidden');
+                lobbyUi.classList.remove('hidden');
             }
         }
         
-        window.onload = () => {
-            if (typeof initializeApp === 'undefined') {
-                setTimeout(() => {
-                    if (typeof initializeApp === 'undefined') {
-                        showMessageBox("Firebase SDK failed to load. Please refresh the page and try again.");
-                        return;
-                    }
-                    init();
-                }, 1000);
-            } else {
-                init();
-            }
-        };
-
+        // Call init() when the window is fully loaded to ensure all DOM elements are available
+        window.onload = init;
     </script>
 </body>
 </html>
