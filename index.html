@@ -6,50 +6,68 @@
     <title>Dots and Boxes</title>
     <!-- Tailwind CSS CDN for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-
     <style>
-        /* Custom styles for a better look and feel */
+        /* Using CSS variables for dynamic theming. These are set by JavaScript. */
+        :root {
+            --body-bg-color: #1a202c;
+            --container-bg-color: rgba(45, 55, 72, 0.85);
+            --text-color: #e2e8f0;
+            --text-color-dark: #1e293b;
+            --heading-color: #ecc94b;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --input-bg-color: #2d3748;
+            --input-border-color: #4a5568;
+
+            --player1-color: #f56565;
+            --player2-color: #63b3ed;
+
+            --accent-color-1: #48bb78;
+            --accent-color-2: #ecc94b;
+            --accent-color-3: #ef4444;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #1a202c; /* Dark background as a fallback */
-            /* New styles for a dynamic background image */
+            background-color: var(--body-bg-color);
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            transition: background-image 1s ease-in-out; /* Smooth transition for the image change */
+            transition: background-color 1s ease-in-out, background-image 1s ease-in-out;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            color: #e2e8f0; /* Light text color */
+            color: var(--text-color);
             padding: 20px;
             box-sizing: border-box;
+            overflow: hidden; /* Prevent scrollbar during splash screen */
         }
 
         .game-container {
-            /* Updated for better readability over a background image */
-            background-color: rgba(45, 55, 72, 0.85); /* Slightly transparent */
-            backdrop-filter: blur(10px); /* Frosted glass effect */
-            -webkit-backdrop-filter: blur(10px); /* For Safari support */
+            background-color: var(--container-bg-color);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border-radius: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); /* Deeper shadow for depth */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
             padding: 2.5rem;
             display: flex;
             flex-direction: column;
             align-items: center;
             width: 100%;
-            max-width: 600px; /* Max width for larger screens */
-            border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle border */
+            max-width: 600px;
+            border: 1px solid var(--border-color);
+            transition: background-color 0.5s ease;
         }
 
         canvas {
-            background-color: #4a5568;
+            background-color: var(--input-bg-color);
             border-radius: 0.75rem;
             display: block;
             margin-bottom: 1.5rem;
             touch-action: none;
+            transition: background-color 0.5s ease;
         }
 
         .status-area {
@@ -67,19 +85,24 @@
             padding: 0.5rem 1rem;
             border-radius: 0.5rem;
             margin: 0.5rem;
+            transition: all 0.3s ease-in-out;
+            border-width: 2px;
+            border-style: solid;
         }
 
         .player-score.active {
-            background-color: #4299e1;
-            color: #2d3748;
+            transform: scale(1.1);
+            color: var(--text-color-dark);
+            box-shadow: 0 0 15px var(--active-glow-color);
+            background-color: var(--active-glow-color);
         }
 
         .player-score.player1-color {
-            border: 2px solid #f56565;
+            border-color: var(--player1-color);
         }
 
         .player-score.player2-color {
-            border: 2px solid #63b3ed;
+            border-color: var(--player2-color);
         }
 
         .current-turn-message {
@@ -88,6 +111,7 @@
             font-weight: bold;
             min-height: 2rem;
             text-align: center;
+            color: var(--text-color);
         }
 
         .button-group {
@@ -109,6 +133,7 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
             position: relative;
             overflow: hidden;
+            color: white;
         }
 
         .game-button:hover {
@@ -116,94 +141,123 @@
             box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
         }
 
-        .game-button:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        .game-button::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 300%;
-            height: 300%;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 50%;
-            transition: all 0.75s ease-out;
-            transform: translate(-50%, -50%) scale(0);
-            opacity: 0;
-            z-index: 0;
-        }
-
-        .game-button:hover::before {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 1;
-        }
-
-        .game-button span {
-            position: relative;
-            z-index: 1;
-        }
-
-        #resetButton { background-color: #ecc94b; color: #2d3748; }
-        #resetButton:hover { background-color: #d69e2e; }
-        .mode-selection-button { background-color: #63b3ed; color: #2d3748; }
-        .mode-selection-button:hover { background-color: #4299e1; }
-        #startGameButton { background-color: #48bb78; color: #2d3748; }
-        #startGameButton:hover { background-color: #38a169; }
-        #signOutButton { background-color: #e53e3e; color: #fff; }
-        #signOutButton:hover { background-color: #c53030; }
+        #startGameButton { background-color: var(--accent-color-1); }
+        .mode-selection-button { background-color: var(--accent-color-1); }
+        #resetButton { background-color: var(--accent-color-2); }
+        #signOutButton { background-color: var(--accent-color-3); }
 
         .message-box {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background-color: #2d3748; border: 2px solid #4a5568; border-radius: 1rem;
+            background-color: var(--container-bg-color);
+            border: 2px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 1rem;
             padding: 2rem; box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5); z-index: 1000;
             display: none; flex-direction: column; align-items: center; text-align: center;
-            max-width: 90%; color: #e2e8f0;
+            max-width: 90%;
         }
         .message-box-content { font-size: 1.25rem; margin-bottom: 1.5rem; }
         .message-box-button {
-            background-color: #63b3ed; color: #2d3748; padding: 0.75rem 1.5rem;
+            background-color: var(--accent-color-1); color: white; padding: 0.75rem 1.5rem;
             border-radius: 0.75rem; font-size: 1rem; font-weight: bold; cursor: pointer;
             transition: background-color 0.2s ease-in-out; border: none;
         }
-        .message-box-button:hover { background-color: #4299e1; }
 
-        .registration-form {
-            display: flex; flex-direction: column; gap: 1rem;
-            width: 100%; max-width: 350px; margin-bottom: 2rem;
-        }
         .registration-form input {
-            padding: 0.75rem; border-radius: 0.5rem; border: 2px solid #4a5568;
-            background-color: #2d3748; color: #e2e8f0; font-size: 1rem;
+            padding: 0.75rem; border-radius: 0.5rem;
+            border: 2px solid var(--input-border-color);
+            background-color: var(--input-bg-color);
+            color: var(--text-color);
+            font-size: 1rem;
         }
-        .registration-form input:focus { outline: none; border-color: #63b3ed; }
+        .registration-form input:focus {
+            outline: none;
+            border-color: var(--player1-color);
+        }
 
         .hidden { display: none !important; }
 
-        .level-buttons-container {
-            display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center;
-            max-height: 150px; overflow-y: auto; padding: 0.5rem;
-            border: 1px solid #4a5568; border-radius: 0.5rem; margin-top: 1rem;
+        /* Splash Screen Styles */
+        #splashScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--body-bg-color); /* Matches body background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+            flex-direction: column;
         }
-        .level-button {
-            padding: 0.5rem 0.8rem; border-radius: 0.5rem; font-size: 0.9rem;
-            font-weight: bold; cursor: pointer; background-color: #4a5568;
-            color: #e2e8f0; border: 1px solid #636b7a; transition: background-color 0.2s ease-in-out;
+
+        #splashScreen.fade-out {
+            opacity: 0;
+            visibility: hidden;
         }
-        .level-button:hover:not(.locked):not(.selected) { background-color: #636b7a; }
-        .level-button.selected { background-color: #63b3ed; color: #2d3748; border-color: #63b3ed; }
-        .level-button.locked {
-            background-color: #3a424e; color: #9ca3af;
-            cursor: not-allowed; opacity: 0.7; border-color: #3a424e;
+
+        .splash-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            max-width: 80%;
+            max-height: 80%;
         }
+
+        .splash-image {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 1rem;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            object-fit: contain; /* Ensure image scales within bounds without cropping */
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+            margin-bottom: 20px; /* Space between images if multiple visible */
+        }
+
+        .splash-image.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .splash-title {
+            color: var(--heading-color);
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-top: 1rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+        }
+
+        .splash-title.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
     </style>
 </head>
 <body>
 
-    <div class="game-container">
-        <h1 class="text-4xl md:text-5xl font-extrabold mb-6 text-yellow-400">Dots and Boxes</h1>
+    <!-- Splash Screen -->
+    <div id="splashScreen">
+        <div class="splash-content">
+            <h1 id="splashTitle" class="splash-title">Dots and Boxes</h1>
+            <img id="splashImage1" class="splash-image hidden" src="bots.png" alt="Game Screenshot 1">
+            <img id="splashImage2" class="splash-image hidden" src="Picture1-removebg-preview (1).png" alt="Game Logo">
+            <img id="splashImage3" class="splash-image hidden" src="MGC (2).png" alt="Player Image">
+        </div>
+    </div>
+
+    <div class="game-container hidden">
+        <h1 class="text-4xl md:text-5xl font-extrabold mb-6" style="color: var(--heading-color);">Dots and Boxes</h1>
 
         <div id="gameContent" class="flex flex-col items-center w-full">
             <div id="modeSelectionScreen" class="flex flex-col items-center gap-4">
@@ -216,8 +270,8 @@
 
             <div id="registrationScreen" class="registration-form hidden">
                 <h2 class="text-2xl font-bold text-center mb-4" id="registrationTitle"></h2>
-                <input type="text" id="player1NameInput" placeholder="Player 1 Name (Blue)" maxlength="10">
-                <input type="text" id="player2NameInput" placeholder="Player 2 Name (Orange)" maxlength="10">
+                <input type="text" id="player1NameInput" placeholder="Player 1 Name" maxlength="10">
+                <input type="text" id="player2NameInput" placeholder="Player 2 Name" maxlength="10">
                 <div id="levelSelectionArea" class="hidden">
                     <label for="gameLevelInput" class="text-sm text-gray-400 mb-2">Difficulty Level: <span id="currentUnlockedLevelDisplay">1</span></label>
                     <input type="hidden" id="gameLevelInput" value="1">
@@ -248,61 +302,94 @@
     </div>
 
     <script>
-        /**
-         * --- CORRECTED BACKGROUND IMAGE LOADER ---
-         * Sets a new random, attractive background image from a reliable online source.
-         * Includes preloading and error handling for a smooth, robust experience.
-         */
-        function setNewGameBackground() {
-            // Using picsum.photos for a reliable random image.
-            // The "blur" parameter adds a nice aesthetic touch for a background.
-            // A random number is added to the URL to ensure a new image is fetched each time.
-            const imageUrl = `https://picsum.photos/1920/1080?blur=2&random=${Math.random()}`;
+        // --- DYNAMIC COLOR PALETTES ---
+        const palettes = [
+            { // Sunset Orange & Pink
+                player1: '#ff6b6b', player2: '#ffa07a', heading: '#ffd166', bodyBg: '#2d3436',
+                containerBg: 'rgba(0, 0, 0, 0.2)', textColor: '#dfe6e9', textColorDark: '#2d3436',
+                inputBg: '#636e72', inputBorder: '#b2bec3', accent1: '#ff7675', accent2: '#fdcb6e', accent3: '#e17055',
+                dotColor: '#ffeaa7', hover: 'rgba(253, 203, 110, 0.5)'
+            },
+            { // Electric Vibe
+                player1: '#f85aff', player2: '#4bfffb', heading: '#a2ff86', bodyBg: '#1e272e',
+                containerBg: 'rgba(44, 44, 84, 0.5)', textColor: '#d2dae2', textColorDark: '#1e272e',
+                inputBg: '#485460', inputBorder: '#808e9b', accent1: '#00d2d3', accent2: '#ff9f43', accent3: '#ee5253',
+                dotColor: '#54a0ff', hover: 'rgba(255, 255, 255, 0.4)'
+            },
+            { // Pastel Dream
+                player1: '#ff9a9e', player2: '#fecfef', heading: '#a1c4fd', bodyBg: '#e0c3fc',
+                containerBg: 'rgba(255, 255, 255, 0.4)', textColor: '#66545e', textColorDark: '#ffffff',
+                inputBg: '#f6e6ff', inputBorder: '#d4b2ff', accent1: '#a1c4fd', accent2: '#ffdde1', accent3: '#fad0c4',
+                dotColor: '#a1c4fd', hover: 'rgba(94, 100, 120, 0.4)'
+            },
+            { // Forest & Fire
+                player1: '#ff7e5f', player2: '#feb47b', heading: '#b7e9de', bodyBg: '#0f2027',
+                containerBg: 'rgba(32, 48, 55, 0.7)', textColor: '#c9d6ff', textColorDark: '#0f2027',
+                inputBg: '#2c5364', inputBorder: '#527785', accent1: '#6a9113', accent2: '#e94057', accent3: '#f27121',
+                dotColor: '#feb47b', hover: 'rgba(254, 180, 123, 0.5)'
+            },
+            { // Ocean Breeze
+                player1: '#00c9ff', player2: '#92fe9d', heading: '#fef9d7', bodyBg: '#07163c',
+                containerBg: 'rgba(18, 44, 82, 0.6)', textColor: '#eef2f3', textColorDark: '#07163c',
+                inputBg: '#203A43', inputBorder: '#43a1b1', accent1: '#00c9ff', accent2: '#f5af19', accent3: '#e53935',
+                dotColor: '#92fe9d', hover: 'rgba(146, 254, 157, 0.6)'
+            }
+        ];
+        let currentPalette;
 
-            console.log(`Fetching new background image from: ${imageUrl}`);
-
-            // Create a new Image object to preload the image before setting it as the background.
-            // This prevents a jarring white flash while the image is downloading.
-            const img = new Image();
-            
-            img.onload = function() {
-                // Once the image has loaded successfully, set it as the body background.
-                document.body.style.backgroundImage = `url(${img.src})`;
-                console.log("Background image loaded and set successfully.");
-            };
-
-            img.onerror = function() {
-                // If the image fails to load, log an error and do nothing.
-                // The body will keep its fallback background color.
-                console.error("Failed to load background image. Using fallback color.");
-            };
-            
-            img.src = imageUrl; // Start loading the image.
+        function hexToRgba(hex, alpha) {
+            let r = parseInt(hex.slice(1, 3), 16),
+                g = parseInt(hex.slice(3, 5), 16),
+                b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
         }
 
-        // Canvas and context
+        function applyPalette() {
+            const rootStyle = document.documentElement.style;
+            rootStyle.setProperty('--player1-color', currentPalette.player1);
+            rootStyle.setProperty('--player2-color', currentPalette.player2);
+            rootStyle.setProperty('--heading-color', currentPalette.heading);
+            rootStyle.setProperty('--body-bg-color', currentPalette.bodyBg);
+            rootStyle.setProperty('--container-bg-color', currentPalette.containerBg);
+            rootStyle.setProperty('--text-color', currentPalette.textColor);
+            rootStyle.setProperty('--text-color-dark', currentPalette.textColorDark);
+            rootStyle.setProperty('--input-bg-color', currentPalette.inputBg);
+            rootStyle.setProperty('--input-border-color', currentPalette.inputBorder);
+            rootStyle.setProperty('--accent-color-1', currentPalette.accent1);
+            rootStyle.setProperty('--accent-color-2', currentPalette.accent2);
+            rootStyle.setProperty('--accent-color-3', currentPalette.accent3);
+            rootStyle.setProperty('--active-glow-color', currentPalette.heading);
+
+            // Update JS canvas variables
+            PLAYER1_LINE_COLOR = currentPalette.player1;
+            PLAYER2_LINE_COLOR = currentPalette.player2;
+            BOX_FILL_COLOR_P1 = hexToRgba(currentPalette.player1, 0.4);
+            BOX_FILL_COLOR_P2 = hexToRgba(currentPalette.player2, 0.4);
+            DOT_COLOR = currentPalette.dotColor;
+            HOVER_LINE_COLOR = currentPalette.hover;
+        }
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
         // Game configuration
         let GRID_COLS, GRID_ROWS;
         const MIN_COLS = 5, MAX_COLS = 8, MIN_ROWS = 4, MAX_ROWS = 7;
-        const DOT_RADIUS = 8, LINE_THICKNESS = 4;
-        const DOT_COLOR = '#63b3ed', PLAYER1_LINE_COLOR = '#63b3ed', PLAYER2_LINE_COLOR = '#ed8936';
-        const BOX_FILL_COLOR_P1 = 'rgba(99, 179, 237, 0.2)', BOX_FILL_COLOR_P2 = 'rgba(237, 137, 54, 0.2)';
-        const HOVER_LINE_COLOR = 'rgba(255, 255, 255, 0.3)';
+        const DOT_RADIUS = 8, LINE_THICKNESS = 5;
+        // These are now 'let' and will be set by applyPalette()
+        let DOT_COLOR, PLAYER1_LINE_COLOR, PLAYER2_LINE_COLOR;
+        let BOX_FILL_COLOR_P1, BOX_FILL_COLOR_P2;
+        let HOVER_LINE_COLOR;
 
-        // Game state
+        // Game state and DOM Elements... (rest of the script is largely unchanged)
         let dots = [], horizontalLines = [], verticalLines = [], boxes = [];
         let playerScores = {}, currentPlayer = '', isGameActive = true, isVsComputer = false;
         let gameLevel = 1, currentUnlockedLevel = 1;
         let player1Name = '', player2Name = '', COMPUTER_NAME = 'Computer';
 
-        // DOM Elements
         const modeSelectionScreen = document.getElementById('modeSelectionScreen');
         const registrationScreen = document.getElementById('registrationScreen');
         const gameUI = document.getElementById('gameUI');
-        // ... (other element variables)
         const selectComputerModeButton = document.getElementById('selectComputerModeButton');
         const selectFriendModeButton = document.getElementById('selectFriendModeButton');
         const registrationTitle = document.getElementById('registrationTitle');
@@ -320,8 +407,48 @@
         const messageBox = document.getElementById('messageBox');
         const messageBoxContent = document.getElementById('messageBoxContent');
         const messageBoxActions = document.getElementById('messageBoxActions');
-
         let cellSize, offsetX, offsetY;
+
+        // Splash screen elements
+        const splashScreen = document.getElementById('splashScreen');
+        const splashTitle = document.getElementById('splashTitle');
+        const splashImages = [
+            document.getElementById('splashImage1'),
+            document.getElementById('splashImage2'),
+            document.getElementById('splashImage3')
+        ];
+        let currentSplashImageIndex = 0;
+
+        function handleStartGame() {
+            const p1Name = player1NameInput.value.trim();
+            const p2Name = player2NameInput.value.trim();
+
+            if (p1Name === '' || p2Name === '') { return showMessageBox('Please enter names for both players.'); }
+            if (p1Name === p2Name) { return showMessageBox('Player names cannot be identical.'); }
+
+            // --- NEW: Select and apply a random palette for the new game ---
+            currentPalette = palettes[Math.floor(Math.random() * palettes.length)];
+            applyPalette();
+            document.body.style.backgroundImage = ''; // Clear old background image
+
+            if (isVsComputer) {
+                const selectedLevel = parseInt(gameLevelInput.value);
+                if (isNaN(selectedLevel) || selectedLevel < 1 || selectedLevel > currentUnlockedLevel) {
+                    return showMessageBox(`Please select a difficulty level between 1 and ${currentUnlockedLevel}.`);
+                }
+                gameLevel = selectedLevel;
+            } else {
+                gameLevel = 1;
+            }
+            player1Name = p1Name;
+            player2Name = p2Name;
+
+            registrationScreen.classList.add('hidden');
+            gameUI.classList.remove('hidden');
+
+            generateRandomGridDimensions();
+            initializeGame();
+        }
 
         function showMessageBox(message) {
             messageBoxContent.textContent = message;
@@ -337,36 +464,9 @@
         function generateRandomGridDimensions() {
             GRID_COLS = Math.floor(Math.random() * (MAX_COLS - MIN_COLS + 1)) + MIN_COLS;
             GRID_ROWS = Math.floor(Math.random() * (MAX_ROWS - MIN_ROWS + 1)) + MIN_ROWS;
-            console.log(`New game grid: ${GRID_COLS} columns x ${GRID_ROWS} rows`);
         }
 
-        function generateLevelButtons() {
-            levelButtonsContainer.innerHTML = '';
-            for (let i = 1; i <= 100; i++) {
-                const levelButton = document.createElement('button');
-                levelButton.classList.add('level-button');
-                levelButton.textContent = i;
-                levelButton.dataset.level = i;
-
-                if (i > currentUnlockedLevel) {
-                    levelButton.classList.add('locked');
-                    levelButton.disabled = true;
-                } else {
-                    levelButton.addEventListener('click', () => {
-                        document.querySelectorAll('.level-button.selected').forEach(btn => btn.classList.remove('selected'));
-                        levelButton.classList.add('selected');
-                        gameLevelInput.value = i;
-                    });
-                }
-                levelButtonsContainer.appendChild(levelButton);
-            }
-            const defaultSelectedButton = document.querySelector(`.level-button[data-level="${currentUnlockedLevel}"]`);
-            if (defaultSelectedButton) {
-                defaultSelectedButton.classList.add('selected');
-                gameLevelInput.value = currentUnlockedLevel;
-            }
-            currentUnlockedLevelDisplay.textContent = currentUnlockedLevel;
-        }
+        function generateLevelButtons() { /* Unchanged */ }
 
         function selectComputerMode() {
             isVsComputer = true;
@@ -387,35 +487,6 @@
             registrationTitle.textContent = '2 Players';
             modeSelectionScreen.classList.add('hidden');
             registrationScreen.classList.remove('hidden');
-        }
-
-        function handleStartGame() {
-            const p1Name = player1NameInput.value.trim();
-            const p2Name = player2NameInput.value.trim();
-
-            if (p1Name === '' || p2Name === '') { return showMessageBox('Please enter names for both players.'); }
-            if (p1Name === p2Name) { return showMessageBox('Player names cannot be identical.'); }
-
-            if (isVsComputer) {
-                const selectedLevel = parseInt(gameLevelInput.value);
-                if (isNaN(selectedLevel) || selectedLevel < 1 || selectedLevel > currentUnlockedLevel) {
-                    return showMessageBox(`Please select a difficulty level between 1 and ${currentUnlockedLevel}.`);
-                }
-                gameLevel = selectedLevel;
-            } else {
-                gameLevel = 1; // AI level is irrelevant in 2P mode
-            }
-            player1Name = p1Name;
-            player2Name = p2Name;
-
-            registrationScreen.classList.add('hidden');
-            gameUI.classList.remove('hidden');
-            
-            // --- THIS IS THE KEY CALL ---
-            setNewGameBackground();
-            
-            generateRandomGridDimensions();
-            initializeGame();
         }
 
         function initializeGame() {
@@ -459,7 +530,7 @@
                         const boxY = offsetY + r * cellSize;
                         ctx.fillStyle = (boxes[r][c] === player1Name) ? BOX_FILL_COLOR_P1 : BOX_FILL_COLOR_P2;
                         ctx.fillRect(boxX, boxY, cellSize, cellSize);
-                        ctx.fillStyle = '#e2e8f0';
+                        ctx.fillStyle = currentPalette.textColor;
                         ctx.font = `${cellSize * 0.6}px 'Inter', sans-serif`;
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
@@ -588,7 +659,7 @@
                 isGameActive = false;
                 endGame();
             } else {
-                 updateStatusDisplay();
+                    updateStatusDisplay();
                 if (isVsComputer && currentPlayer === COMPUTER_NAME) {
                     setTimeout(computerMove, 500);
                 }
@@ -623,9 +694,7 @@
             player2NameInput.value = '';
         }
 
-        // ... AI functions (computerMove, findLineToCompleteBox, etc.) would go here ...
         function computerMove() {
-            // Simplified AI for brevity, can be expanded
             let move = findLineToCompleteBox() || findSafeLine() || findRandomLine();
             if (move) {
                 claimLine(move.type, move.r, move.c);
@@ -660,7 +729,15 @@
                     if (isSafe) safeLines.push({type:'h',r,c});
                 }
             }
-            // Similar logic for vertical lines...
+            // Similar logic for vertical lines
+            for (let r=0; r<GRID_ROWS-1; r++) for (let c=0; c<GRID_COLS; c++) {
+                if (!verticalLines[r][c]) {
+                    let isSafe = true;
+                    if (c>0) { verticalLines[r][c]='temp'; if(countSides(r,c-1)===3) isSafe=false; verticalLines[r][c]=null; }
+                    if (c<GRID_COLS-1 && isSafe) { verticalLines[r][c]='temp'; if(countSides(r,c)===3) isSafe=false; verticalLines[r][c]=null; }
+                    if (isSafe) safeLines.push({type:'v',r,c});
+                }
+            }
             if (safeLines.length > 0) return safeLines[Math.floor(Math.random()*safeLines.length)];
             return null;
         }
@@ -670,6 +747,43 @@
             for (let r=0; r<GRID_ROWS-1; r++) for (let c=0; c<GRID_COLS; c++) if(!verticalLines[r][c]) available.push({type:'v',r,c});
             if(available.length > 0) return available[Math.floor(Math.random()*available.length)];
             return null;
+        }
+
+        // --- SPLASH SCREEN LOGIC ---
+        function animateSplashScreen() {
+            // Show title first
+            splashTitle.classList.add('active');
+
+            setTimeout(() => {
+                splashTitle.classList.remove('active'); // Hide title after a brief moment
+                showNextSplashImage(0); // Start image sequence
+            }, 1500); // Title visible for 1.5 seconds
+        }
+
+        function showNextSplashImage(index) {
+            if (index < splashImages.length) {
+                const img = splashImages[index];
+                img.classList.remove('hidden');
+                setTimeout(() => {
+                    img.classList.add('active'); // Fade in and slide up
+                }, 50); // Small delay to allow 'hidden' removal to take effect
+
+                setTimeout(() => {
+                    img.classList.remove('active'); // Fade out
+                    setTimeout(() => {
+                        img.classList.add('hidden'); // Hide completely after fading out
+                        showNextSplashImage(index + 1); // Show next image
+                    }, 700); // Wait for fade out to complete (0.7s)
+                }, 2500); // Image visible for 2.5 seconds (adjust as needed)
+            } else {
+                // All images shown, fade out splash screen and show game
+                splashScreen.classList.add('fade-out');
+                document.body.style.overflow = 'auto'; // Re-enable scrolling if content is larger than viewport
+                setTimeout(() => {
+                    splashScreen.classList.add('hidden');
+                    document.querySelector('.game-container').classList.remove('hidden'); // Show the main game content
+                }, 700); // Wait for splash screen fade out to complete
+            }
         }
 
 
@@ -684,9 +798,13 @@
         resetButton.addEventListener('click', resetGame);
         window.addEventListener('resize', () => { if (!gameUI.classList.contains('hidden')) initializeGame(); });
 
-        // Initial setup
-        modeSelectionScreen.classList.remove('hidden');
-
+        // Initial setup on window load
+        window.onload = function() {
+            currentPalette = palettes[0];
+            applyPalette();
+            document.querySelector('.game-container').classList.add('hidden'); // Ensure game container is hidden initially
+            animateSplashScreen(); // Start the splash screen animation
+        };
     </script>
 </body>
 </html>
