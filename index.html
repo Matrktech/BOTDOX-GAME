@@ -9,8 +9,8 @@
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
         body {
             font-family: 'Roboto Mono', monospace;
-            background-color: #1a202c;
-            color: #e2e8f0;
+            background-color: #1a1a2e;
+            color: #ffffff;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -19,24 +19,30 @@
             margin: 0;
             padding: 2rem;
             box-sizing: border-box;
+            user-select: none;
+            touch-action: none;
         }
         .game-wrapper {
-            background-color: #2d3748;
+            background-color: #2e1a3e;
             padding: 2rem;
             border-radius: 1rem;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
             text-align: center;
             max-width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
         h1 {
             font-size: 2.5rem;
             font-weight: 700;
             margin-bottom: 1.5rem;
-            color: #a0aec0;
+            color: #d8b8ff;
         }
         canvas {
-            border: 4px solid #4a5568;
-            background-color: #1a202c;
+            border: 4px solid #a464ff;
+            background-color: #0d0d1b;
             border-radius: 0.5rem;
             touch-action: none;
         }
@@ -53,16 +59,18 @@
             flex-wrap: wrap;
         }
         .player-card {
-            background-color: #4a5568;
+            background-color: #4a286c;
             padding: 1rem;
             border-radius: 0.5rem;
             flex: 1;
             min-width: 150px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            border: 2px solid transparent;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
         .player-card.active {
-            border: 2px solid #63b3ed;
-            box-shadow: 0 0 15px #63b3ed;
+            border-color: #f7a421;
+            box-shadow: 0 0 15px #f7a421;
         }
         .player-name {
             font-size: 1.125rem;
@@ -77,7 +85,7 @@
             margin-top: 1.5rem;
         }
         .btn {
-            background-color: #48bb78;
+            background-color: #8c24b1;
             color: white;
             padding: 0.75rem 2rem;
             font-size: 1rem;
@@ -86,9 +94,10 @@
             border: none;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
         }
         .btn:hover {
-            background-color: #38a169;
+            background-color: #6a1a8c;
             transform: scale(1.05);
         }
         #messageBox {
@@ -96,11 +105,11 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: #4a5568;
+            background-color: #2e1a3e;
             color: white;
             padding: 2rem;
             border-radius: 1rem;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
             z-index: 1000;
             display: none;
             text-align: center;
@@ -111,22 +120,22 @@
         }
         .mode-selection {
             display: flex;
+            flex-direction: column;
             gap: 1rem;
-            margin-bottom: 2rem;
             flex-wrap: wrap;
             justify-content: center;
-        }
-        .mode-selection .btn {
-            background-color: #38a169;
+            padding: 2rem;
         }
     </style>
 </head>
 <body>
     <div class="game-wrapper">
-        <h1>Dots and Boxes</h1>
-        <div id="modeSelection" class="mode-selection">
-            <button id="twoPlayerBtn" class="btn">Two Players</button>
-            <button id="vsComputerBtn" class="btn">Vs. Computer</button>
+        <h1 id="title">Dots and Boxes</h1>
+        <div id="startScreen">
+            <div class="mode-selection">
+                <button id="twoPlayerBtn" class="btn">Two Players</button>
+                <button id="vsComputerBtn" class="btn">Vs. Computer</button>
+            </div>
         </div>
         <canvas id="gameCanvas" style="display:none;"></canvas>
         <p id="gameStatus" class="game-status" style="display:none;">Current Turn: Player 1</p>
@@ -163,9 +172,11 @@
             const score2El = document.getElementById('score2');
             const twoPlayerBtn = document.getElementById('twoPlayerBtn');
             const vsComputerBtn = document.getElementById('vsComputerBtn');
-            const modeSelection = document.getElementById('modeSelection');
+            const startScreen = document.getElementById('startScreen');
+            const titleEl = document.getElementById('title');
             const scoreBoard = document.querySelector('.score-board');
             const buttonContainer = document.querySelector('.button-container');
+            const gameWrapper = document.querySelector('.game-wrapper');
 
             const boardSize = 6;
             const padding = 25;
@@ -179,14 +190,15 @@
             let vsComputer = false;
 
             const playerColors = {
-                'player1': { line: '#63b3ed', box: '#63b3ed80' },
-                'player2': { line: '#f6ad55', box: '#f6ad5580' }
+                'player1': { line: '#f7a421', box: 'rgba(247, 164, 33, 0.4)' },
+                'player2': { line: '#a464ff', box: 'rgba(164, 100, 255, 0.4)' }
             };
 
             const resizeCanvas = () => {
-                const gameWrapper = document.querySelector('.game-wrapper');
                 const availableWidth = gameWrapper.offsetWidth - (2 * padding);
-                cellSize = Math.floor(availableWidth / (boardSize + 1));
+                const availableHeight = gameWrapper.offsetHeight - (titleEl.offsetHeight + statusEl.offsetHeight + scoreBoard.offsetHeight + buttonContainer.offsetHeight + (2 * padding));
+                const minDimension = Math.min(availableWidth, availableHeight);
+                cellSize = Math.floor(minDimension / (boardSize + 1));
                 canvas.width = (boardSize * cellSize) + (2 * padding);
                 canvas.height = (boardSize * cellSize) + (2 * padding);
                 drawGrid();
@@ -243,7 +255,7 @@
                     ctx.stroke();
                 });
 
-                ctx.fillStyle = '#cbd5e0';
+                ctx.fillStyle = '#ff8c42';
                 for (let i = 0; i < boardSize + 1; i++) {
                     for (let j = 0; j < boardSize + 1; j++) {
                         ctx.beginPath();
@@ -261,24 +273,6 @@
                 return lines.find(line => 
                     line.x1 === x1 && line.y1 === y1 && line.x2 === x2 && line.y2 === y2
                 );
-            };
-
-            const getAdjacentLines = (x, y, isVertical) => {
-                let adjacentLines = [];
-                if (isVertical) {
-                    // Check horizontal lines for potential box completion
-                    if (y > 0) adjacentLines.push({ x1: x - 1, y1: y - 1, x2: x, y2: y - 1, isVertical: false });
-                    if (x > 0) adjacentLines.push({ x1: x - 1, y1: y - 1, x2: x - 1, y2: y, isVertical: true });
-                    adjacentLines.push({ x1: x, y1: y - 1, x2: x, y2: y, isVertical: false });
-                    if (x < boardSize) adjacentLines.push({ x1: x + 1, y1: y - 1, x2: x + 1, y2: y, isVertical: true });
-                } else {
-                    // Check vertical lines for potential box completion
-                    if (x > 0) adjacentLines.push({ x1: x - 1, y1: y - 1, x2: x - 1, y2: y, isVertical: true });
-                    if (y > 0) adjacentLines.push({ x1: x - 1, y1: y - 1, x2: x, y2: y - 1, isVertical: false });
-                    adjacentLines.push({ x1: x - 1, y1: y, x2: x, y2: y, isVertical: true });
-                    if (y < boardSize) adjacentLines.push({ x1: x - 1, y1: y + 1, x2: x, y2: y + 1, isVertical: false });
-                }
-                return adjacentLines;
             };
 
             const checkForCompletedBox = (x, y, isVertical) => {
@@ -332,7 +326,7 @@
 
             const handleInput = (event) => {
                 if (currentPlayer === 'player2' && vsComputer) {
-                    return; // Don't allow player input when it's the computer's turn
+                    return;
                 }
 
                 const rect = canvas.getBoundingClientRect();
@@ -356,13 +350,13 @@
 
                 let x1, y1, x2, y2;
 
-                if (dx < cellSize / 4 && dy > cellSize / 4) { // Vertical line
+                if (dx < cellSize / 4 && dy > cellSize / 4) {
                     if (gridY >= 0 && gridY < boardSize && gridX >= 0 && gridX < boardSize + 1) {
                         x1 = x2 = gridX;
                         y1 = gridY;
                         y2 = gridY + 1;
                     } else { return; }
-                } else if (dy < cellSize / 4 && dx > cellSize / 4) { // Horizontal line
+                } else if (dy < cellSize / 4 && dx > cellSize / 4) {
                     if (gridX >= 0 && gridX < boardSize && gridY >= 0 && gridY < boardSize + 1) {
                         x1 = gridX;
                         x2 = gridX + 1;
@@ -378,14 +372,14 @@
                 for (let i = 0; i <= boardSize; i++) {
                     for (let j = 0; j < boardSize; j++) {
                         if (!findLine(i, j, i, j + 1)) {
-                            availableMoves.push({ x1: i, y1: j, x2: i, y2: j + 1 });
+                            availableMoves.push({ x1: i, y1: j, x2: i, y2: j + 1, isVertical: true });
                         }
                     }
                 }
                 for (let i = 0; i < boardSize; i++) {
                     for (let j = 0; j <= boardSize; j++) {
                         if (!findLine(i, j, i + 1, j)) {
-                            availableMoves.push({ x1: i, y1: j, x2: i + 1, y2: j });
+                            availableMoves.push({ x1: i, y1: j, x2: i + 1, y2: j, isVertical: false });
                         }
                     }
                 }
@@ -393,8 +387,7 @@
                 // Simple computer logic: prioritize completing a box
                 for (const move of availableMoves) {
                     const tempLines = [...lines, { ...move, color: 'temp' }];
-                    const tempBoxes = [];
-                    const isVertical = move.x1 === move.x2;
+                    const isVertical = move.isVertical;
                     let newBoxes = 0;
                     
                     const potentialBoxes = isVertical ? [{ x: move.x1 - 1, y: move.y1 }, { x: move.x1, y: move.y1 }] : [{ x: move.x1, y: move.y1 - 1 }, { x: move.x1, y: move.y1 }];
@@ -425,6 +418,19 @@
                 }
             };
 
+            const enterFullscreen = () => {
+                const element = document.documentElement;
+                if (element.requestFullscreen) {
+                    element.requestFullscreen();
+                } else if (element.mozRequestFullScreen) {
+                    element.mozRequestFullScreen();
+                } else if (element.webkitRequestFullscreen) {
+                    element.webkitRequestFullscreen();
+                } else if (element.msRequestFullscreen) {
+                    element.msRequestFullscreen();
+                }
+            };
+
 
             const initializeGame = (mode) => {
                 vsComputer = mode === 'vs-computer';
@@ -433,37 +439,47 @@
                 scores = { 'player1': 0, 'player2': 0 };
                 currentPlayer = 'player1';
                 messageBox.style.display = 'none';
-                resizeCanvas();
-                player1Card.classList.add('active');
-                player2Card.classList.remove('active');
-                statusEl.textContent = `Current Turn: ${vsComputer ? 'You' : 'Player 1'}`;
-
-                // Show game elements
+                
+                // Hide start screen and show game elements
+                startScreen.style.display = 'none';
                 canvas.style.display = 'block';
                 statusEl.style.display = 'block';
                 scoreBoard.style.display = 'flex';
                 buttonContainer.style.display = 'flex';
-                modeSelection.style.display = 'none';
+                titleEl.style.display = 'none';
 
                 // Set player names
                 document.querySelector('#player1Card .player-name').textContent = vsComputer ? 'You' : 'Player 1';
                 document.querySelector('#player2Card .player-name').textContent = vsComputer ? 'Computer' : 'Player 2';
                 
-                drawGrid();
+                resizeCanvas();
+                player1Card.classList.add('active');
+                player2Card.classList.remove('active');
                 updateStatus();
+                statusEl.textContent = `Current Turn: ${vsComputer ? 'You' : 'Player 1'}`;
+                
+                enterFullscreen();
             };
 
-            twoPlayerBtn.addEventListener('click', () => initializeGame('two-player'));
-            vsComputerBtn.addEventListener('click', () => initializeGame('vs-computer'));
-            restartBtn.addEventListener('click', () => {
-                modeSelection.style.display = 'flex';
+            const showStartScreen = () => {
+                startScreen.style.display = 'block';
                 canvas.style.display = 'none';
                 statusEl.style.display = 'none';
                 scoreBoard.style.display = 'none';
                 buttonContainer.style.display = 'none';
                 messageBox.style.display = 'none';
+                titleEl.style.display = 'block';
+            };
+
+
+            twoPlayerBtn.addEventListener('click', () => initializeGame('two-player'));
+            vsComputerBtn.addEventListener('click', () => initializeGame('vs-computer'));
+            restartBtn.addEventListener('click', () => {
+                showStartScreen();
             });
-            restartMessageBtn.addEventListener('click', () => initializeGame(vsComputer ? 'vs-computer' : 'two-player'));
+            restartMessageBtn.addEventListener('click', () => {
+                initializeGame(vsComputer ? 'vs-computer' : 'two-player');
+            });
 
             canvas.addEventListener('mousedown', handleInput);
             canvas.addEventListener('touchstart', handleInput);
