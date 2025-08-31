@@ -202,9 +202,9 @@
                 const gameWrapper = document.querySelector('.game-wrapper');
                 const availableSize = Math.min(window.innerWidth, window.innerHeight) * 0.75;
                 cellSize = Math.floor(availableSize / (boardSize + 1));
-                padding = cellSize * 0.5;
-                dotRadius = cellSize * 0.1;
-                lineWidth = cellSize * 0.06;
+                padding = cellSize * 0.4;
+                dotRadius = cellSize * 0.15;
+                lineWidth = cellSize * 0.1;
 
                 canvas.width = (boardSize * cellSize) + (2 * padding);
                 canvas.height = (boardSize * cellSize) + (2 * padding);
@@ -278,7 +278,7 @@
                     [y1, y2] = [y2, y1];
                 }
                 return lines.find(line => 
-                    line.x1 === x1 && line.y1 === y1 && line.x2 === x2 && line.y2 === y2
+                    line.x1 === x1 && line.y1 === y1 && line.x2 === x2 && line.y2 === y1
                 );
             };
 
