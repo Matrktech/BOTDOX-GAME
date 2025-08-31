@@ -24,7 +24,7 @@
         }
         .game-wrapper {
             background-color: #2e1a3e;
-            padding: 1.5rem;
+            padding: 1rem;
             border-radius: 1rem;
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
             text-align: center;
@@ -213,6 +213,12 @@
                 const gameWrapper = document.querySelector('.game-wrapper');
                 const availableSize = Math.min(window.innerWidth, window.innerHeight) * 0.9;
                 cellSize = Math.floor(availableSize / (boardSize + 1));
+                
+                // Increase size for mobile screens to be more tappable
+                const isMobile = Math.min(window.innerWidth, window.innerHeight) < 768;
+                const scaleFactor = isMobile ? 1.5 : 1.2;
+                cellSize *= scaleFactor;
+                
                 padding = cellSize * 0.2;
                 dotRadius = cellSize * 0.15;
                 lineWidth = cellSize * 0.1;
