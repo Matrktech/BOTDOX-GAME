@@ -109,14 +109,28 @@
             font-size: 1.5rem;
             margin-bottom: 1rem;
         }
+        .mode-selection {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .mode-selection .btn {
+            background-color: #38a169;
+        }
     </style>
 </head>
 <body>
     <div class="game-wrapper">
         <h1>Dots and Boxes</h1>
-        <canvas id="gameCanvas"></canvas>
-        <p id="gameStatus" class="game-status">Current Turn: Player 1</p>
-        <div class="score-board">
+        <div id="modeSelection" class="mode-selection">
+            <button id="twoPlayerBtn" class="btn">Two Players</button>
+            <button id="vsComputerBtn" class="btn">Vs. Computer</button>
+        </div>
+        <canvas id="gameCanvas" style="display:none;"></canvas>
+        <p id="gameStatus" class="game-status" style="display:none;">Current Turn: Player 1</p>
+        <div class="score-board" style="display:none;">
             <div id="player1Card" class="player-card active">
                 <div class="player-name">Player 1</div>
                 <div id="score1" class="score">0</div>
@@ -126,7 +140,7 @@
                 <div id="score2" class="score">0</div>
             </div>
         </div>
-        <div class="button-container">
+        <div class="button-container" style="display:none;">
             <button id="restartBtn" class="btn">Restart</button>
         </div>
     </div>
@@ -147,21 +161,38 @@
             const player2Card = document.getElementById('player2Card');
             const score1El = document.getElementById('score1');
             const score2El = document.getElementById('score2');
+            const twoPlayerBtn = document.getElementById('twoPlayerBtn');
+            const vsComputerBtn = document.getElementById('vsComputerBtn');
+            const modeSelection = document.getElementById('modeSelection');
+            const scoreBoard = document.querySelector('.score-board');
+            const buttonContainer = document.querySelector('.button-container');
 
             const boardSize = 6;
-            const cellSize = 50;
             const padding = 25;
             const dotRadius = 5;
+            let cellSize = 50;
 
             let lines = [];
             let boxes = [];
             let scores = { 'player1': 0, 'player2': 0 };
             let currentPlayer = 'player1';
+            let vsComputer = false;
 
             const playerColors = {
                 'player1': { line: '#63b3ed', box: '#63b3ed80' },
                 'player2': { line: '#f6ad55', box: '#f6ad5580' }
             };
+
+            const resizeCanvas = () => {
+                const gameWrapper = document.querySelector('.game-wrapper');
+                const availableWidth = gameWrapper.offsetWidth - (2 * padding);
+                cellSize = Math.floor(availableWidth / (boardSize + 1));
+                canvas.width = (boardSize * cellSize) + (2 * padding);
+                canvas.height = (boardSize * cellSize) + (2 * padding);
+                drawGrid();
+            };
+
+            window.addEventListener('resize', resizeCanvas);
 
             const switchTurn = (scored) => {
                 if (!scored) {
@@ -169,6 +200,10 @@
                     player1Card.classList.toggle('active', currentPlayer === 'player1');
                     player2Card.classList.toggle('active', currentPlayer === 'player2');
                     statusEl.textContent = `Current Turn: ${currentPlayer === 'player1' ? 'Player 1' : 'Player 2'}`;
+
+                    if (vsComputer && currentPlayer === 'player2') {
+                        setTimeout(computerMove, 500);
+                    }
                 }
             };
 
@@ -179,9 +214,9 @@
                 if (boxes.length === boardSize * boardSize) {
                     let winnerText = "It's a tie!";
                     if (scores['player1'] > scores['player2']) {
-                        winnerText = "Player 1 wins!";
+                        winnerText = `${vsComputer ? 'You' : 'Player 1'} win!`;
                     } else if (scores['player2'] > scores['player1']) {
-                        winnerText = "Player 2 wins!";
+                        winnerText = `${vsComputer ? 'The computer' : 'Player 2'} wins!`;
                     }
                     messageTitle.textContent = `Game Over! ${winnerText}`;
                     messageBox.style.display = 'block';
@@ -193,7 +228,6 @@
                 ctx.lineCap = 'round';
                 ctx.lineWidth = 3;
 
-                // Draw captured boxes
                 boxes.forEach(box => {
                     ctx.fillStyle = box.color;
                     const x = padding + box.x * cellSize + dotRadius;
@@ -201,7 +235,6 @@
                     ctx.fillRect(x, y, cellSize - 2 * dotRadius, cellSize - 2 * dotRadius);
                 });
 
-                // Draw all lines
                 lines.forEach(line => {
                     ctx.strokeStyle = line.color;
                     ctx.beginPath();
@@ -210,7 +243,6 @@
                     ctx.stroke();
                 });
 
-                // Draw dots on top
                 ctx.fillStyle = '#cbd5e0';
                 for (let i = 0; i < boardSize + 1; i++) {
                     for (let j = 0; j < boardSize + 1; j++) {
@@ -231,27 +263,45 @@
                 );
             };
 
+            const getAdjacentLines = (x, y, isVertical) => {
+                let adjacentLines = [];
+                if (isVertical) {
+                    // Check horizontal lines for potential box completion
+                    if (y > 0) adjacentLines.push({ x1: x - 1, y1: y - 1, x2: x, y2: y - 1, isVertical: false });
+                    if (x > 0) adjacentLines.push({ x1: x - 1, y1: y - 1, x2: x - 1, y2: y, isVertical: true });
+                    adjacentLines.push({ x1: x, y1: y - 1, x2: x, y2: y, isVertical: false });
+                    if (x < boardSize) adjacentLines.push({ x1: x + 1, y1: y - 1, x2: x + 1, y2: y, isVertical: true });
+                } else {
+                    // Check vertical lines for potential box completion
+                    if (x > 0) adjacentLines.push({ x1: x - 1, y1: y - 1, x2: x - 1, y2: y, isVertical: true });
+                    if (y > 0) adjacentLines.push({ x1: x - 1, y1: y - 1, x2: x, y2: y - 1, isVertical: false });
+                    adjacentLines.push({ x1: x - 1, y1: y, x2: x, y2: y, isVertical: true });
+                    if (y < boardSize) adjacentLines.push({ x1: x - 1, y1: y + 1, x2: x, y2: y + 1, isVertical: false });
+                }
+                return adjacentLines;
+            };
+
             const checkForCompletedBox = (x, y, isVertical) => {
                 let newBoxesCount = 0;
                 let potentialBoxes = [];
 
                 if (isVertical) {
-                    potentialBoxes.push({ x: x - 1, y: y }); 
+                    potentialBoxes.push({ x: x - 1, y: y });
                     potentialBoxes.push({ x: x, y: y });
                 } else {
-                    potentialBoxes.push({ x: x, y: y - 1 }); 
+                    potentialBoxes.push({ x: x, y: y - 1 });
                     potentialBoxes.push({ x: x, y: y });
                 }
-                
+
                 potentialBoxes.forEach(box => {
                     if (box.x >= 0 && box.x < boardSize && box.y >= 0 && box.y < boardSize) {
                         const top = findLine(box.x, box.y, box.x + 1, box.y);
                         const right = findLine(box.x + 1, box.y, box.x + 1, box.y + 1);
                         const bottom = findLine(box.x, box.y + 1, box.x + 1, box.y + 1);
                         const left = findLine(box.x, box.y, box.x, box.y + 1);
-                        
+
                         const isCompleted = [top, right, bottom, left].every(line => line !== undefined);
-                        
+
                         if (isCompleted && !boxes.some(b => b.x === box.x && b.y === box.y)) {
                             boxes.push({ x: box.x, y: box.y, color: playerColors[currentPlayer].box });
                             newBoxesCount++;
@@ -261,47 +311,18 @@
                 return newBoxesCount;
             };
 
-            const handleLineClick = (event) => {
-                const rect = canvas.getBoundingClientRect();
-                const mouseX = event.clientX - rect.left;
-                const mouseY = event.clientY - rect.top;
-
-                const gridX = Math.round((mouseX - padding) / cellSize);
-                const gridY = Math.round((mouseY - padding) / cellSize);
-
-                const dx = Math.abs(mouseX - (padding + gridX * cellSize));
-                const dy = Math.abs(mouseY - (padding + gridY * cellSize));
-
-                let x1, y1, x2, y2;
-                let isVertical = false;
-
-                if (dx < cellSize / 4 && dy > cellSize / 4) { // Vertical line
-                    if (gridY >= 0 && gridY < boardSize && gridX >= 0 && gridX < boardSize + 1) {
-                        x1 = x2 = gridX;
-                        y1 = gridY;
-                        y2 = gridY + 1;
-                        isVertical = true;
-                    } else { return; }
-                } else if (dy < cellSize / 4 && dx > cellSize / 4) { // Horizontal line
-                    if (gridX >= 0 && gridX < boardSize && gridY >= 0 && gridY < boardSize + 1) {
-                        x1 = gridX;
-                        x2 = gridX + 1;
-                        y1 = y2 = gridY;
-                        isVertical = false;
-                    } else { return; }
-                } else { return; }
-
+            const handleTurn = (x1, y1, x2, y2) => {
                 if (x1 > x2 || y1 > y2) {
                     [x1, x2] = [x2, x1];
                     [y1, y2] = [y2, y1];
                 }
 
                 if (findLine(x1, y1, x2, y2)) {
-                    return; // Line already exists
+                    return;
                 }
 
                 lines.push({ x1, y1, x2, y2, color: playerColors[currentPlayer].line });
-                const newBoxes = checkForCompletedBox(Math.min(x1, x2), Math.min(y1, y2), isVertical);
+                const newBoxes = checkForCompletedBox(Math.min(x1, x2), Math.min(y1, y2), x1 === x2);
                 scores[currentPlayer] += newBoxes;
                 
                 drawGrid();
@@ -309,26 +330,143 @@
                 switchTurn(newBoxes > 0);
             };
 
-            const initializeGame = () => {
+            const handleInput = (event) => {
+                if (currentPlayer === 'player2' && vsComputer) {
+                    return; // Don't allow player input when it's the computer's turn
+                }
+
+                const rect = canvas.getBoundingClientRect();
+                let mouseX, mouseY;
+
+                if (event.type.startsWith('touch')) {
+                    const touch = event.touches[0];
+                    mouseX = touch.clientX - rect.left;
+                    mouseY = touch.clientY - rect.top;
+                    event.preventDefault();
+                } else {
+                    mouseX = event.clientX - rect.left;
+                    mouseY = event.clientY - rect.top;
+                }
+                
+                const gridX = Math.round((mouseX - padding) / cellSize);
+                const gridY = Math.round((mouseY - padding) / cellSize);
+
+                const dx = Math.abs(mouseX - (padding + gridX * cellSize));
+                const dy = Math.abs(mouseY - (padding + gridY * cellSize));
+
+                let x1, y1, x2, y2;
+
+                if (dx < cellSize / 4 && dy > cellSize / 4) { // Vertical line
+                    if (gridY >= 0 && gridY < boardSize && gridX >= 0 && gridX < boardSize + 1) {
+                        x1 = x2 = gridX;
+                        y1 = gridY;
+                        y2 = gridY + 1;
+                    } else { return; }
+                } else if (dy < cellSize / 4 && dx > cellSize / 4) { // Horizontal line
+                    if (gridX >= 0 && gridX < boardSize && gridY >= 0 && gridY < boardSize + 1) {
+                        x1 = gridX;
+                        x2 = gridX + 1;
+                        y1 = y2 = gridY;
+                    } else { return; }
+                } else { return; }
+                
+                handleTurn(x1, y1, x2, y2);
+            };
+
+            const computerMove = () => {
+                const availableMoves = [];
+                for (let i = 0; i <= boardSize; i++) {
+                    for (let j = 0; j < boardSize; j++) {
+                        if (!findLine(i, j, i, j + 1)) {
+                            availableMoves.push({ x1: i, y1: j, x2: i, y2: j + 1 });
+                        }
+                    }
+                }
+                for (let i = 0; i < boardSize; i++) {
+                    for (let j = 0; j <= boardSize; j++) {
+                        if (!findLine(i, j, i + 1, j)) {
+                            availableMoves.push({ x1: i, y1: j, x2: i + 1, y2: j });
+                        }
+                    }
+                }
+
+                // Simple computer logic: prioritize completing a box
+                for (const move of availableMoves) {
+                    const tempLines = [...lines, { ...move, color: 'temp' }];
+                    const tempBoxes = [];
+                    const isVertical = move.x1 === move.x2;
+                    let newBoxes = 0;
+                    
+                    const potentialBoxes = isVertical ? [{ x: move.x1 - 1, y: move.y1 }, { x: move.x1, y: move.y1 }] : [{ x: move.x1, y: move.y1 - 1 }, { x: move.x1, y: move.y1 }];
+                    
+                    potentialBoxes.forEach(box => {
+                        if (box.x >= 0 && box.x < boardSize && box.y >= 0 && box.y < boardSize) {
+                             const top = tempLines.find(l => l.x1 === box.x && l.y1 === box.y && l.x2 === box.x + 1 && l.y2 === box.y);
+                             const right = tempLines.find(l => l.x1 === box.x + 1 && l.y1 === box.y && l.x2 === box.x + 1 && l.y2 === box.y + 1);
+                             const bottom = tempLines.find(l => l.x1 === box.x && l.y1 === box.y + 1 && l.x2 === box.x + 1 && l.y2 === box.y + 1);
+                             const left = tempLines.find(l => l.x1 === box.x && l.y1 === box.y && l.x2 === box.x && l.y2 === box.y + 1);
+
+                             if (top && right && bottom && left && !boxes.some(b => b.x === box.x && b.y === box.y)) {
+                                 newBoxes++;
+                             }
+                        }
+                    });
+
+                    if (newBoxes > 0) {
+                        handleTurn(move.x1, move.y1, move.x2, move.y2);
+                        return;
+                    }
+                }
+                
+                // If no box can be completed, make a random move
+                if (availableMoves.length > 0) {
+                    const randomMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
+                    handleTurn(randomMove.x1, randomMove.y1, randomMove.x2, randomMove.y2);
+                }
+            };
+
+
+            const initializeGame = (mode) => {
+                vsComputer = mode === 'vs-computer';
                 lines = [];
                 boxes = [];
                 scores = { 'player1': 0, 'player2': 0 };
                 currentPlayer = 'player1';
                 messageBox.style.display = 'none';
-                canvas.width = (boardSize * cellSize) + (2 * padding);
-                canvas.height = (boardSize * cellSize) + (2 * padding);
+                resizeCanvas();
                 player1Card.classList.add('active');
                 player2Card.classList.remove('active');
+                statusEl.textContent = `Current Turn: ${vsComputer ? 'You' : 'Player 1'}`;
+
+                // Show game elements
+                canvas.style.display = 'block';
+                statusEl.style.display = 'block';
+                scoreBoard.style.display = 'flex';
+                buttonContainer.style.display = 'flex';
+                modeSelection.style.display = 'none';
+
+                // Set player names
+                document.querySelector('#player1Card .player-name').textContent = vsComputer ? 'You' : 'Player 1';
+                document.querySelector('#player2Card .player-name').textContent = vsComputer ? 'Computer' : 'Player 2';
+                
                 drawGrid();
                 updateStatus();
-                statusEl.textContent = `Current Turn: Player 1`;
             };
 
-            canvas.addEventListener('click', handleLineClick);
-            restartBtn.addEventListener('click', initializeGame);
-            restartMessageBtn.addEventListener('click', initializeGame);
+            twoPlayerBtn.addEventListener('click', () => initializeGame('two-player'));
+            vsComputerBtn.addEventListener('click', () => initializeGame('vs-computer'));
+            restartBtn.addEventListener('click', () => {
+                modeSelection.style.display = 'flex';
+                canvas.style.display = 'none';
+                statusEl.style.display = 'none';
+                scoreBoard.style.display = 'none';
+                buttonContainer.style.display = 'none';
+                messageBox.style.display = 'none';
+            });
+            restartMessageBtn.addEventListener('click', () => initializeGame(vsComputer ? 'vs-computer' : 'two-player'));
 
-            initializeGame();
+            canvas.addEventListener('mousedown', handleInput);
+            canvas.addEventListener('touchstart', handleInput);
         });
     </script>
 </body>
