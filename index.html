@@ -24,11 +24,10 @@
         }
         .game-wrapper {
             background-color: #2e1a3e;
-            padding: 2rem;
+            padding: 1.5rem;
             border-radius: 1rem;
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
             text-align: center;
-            max-width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -37,7 +36,7 @@
         h1 {
             font-size: 2.5rem;
             font-weight: 700;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             color: #d8b8ff;
         }
         canvas {
@@ -47,48 +46,52 @@
             touch-action: none;
         }
         .game-status {
-            margin-top: 1.5rem;
-            font-size: 1.25rem;
+            margin-top: 1rem;
+            font-size: 1rem;
             font-weight: 700;
         }
         .score-board {
             display: flex;
             justify-content: space-around;
-            margin-top: 1rem;
-            gap: 1rem;
-            flex-wrap: wrap;
+            width: 100%;
+            margin-bottom: 1rem;
+            gap: 0.5rem;
+            align-items: center;
         }
         .player-card {
             background-color: #4a286c;
-            padding: 1rem;
+            padding: 0.5rem;
             border-radius: 0.5rem;
-            flex: 1;
-            min-width: 150px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             border: 2px solid transparent;
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+            justify-content: center;
         }
         .player-card.active {
             border-color: #f7a421;
-            box-shadow: 0 0 15px #f7a421;
+            box-shadow: 0 0 10px #f7a421;
         }
         .player-name {
-            font-size: 1.125rem;
+            font-size: 0.875rem;
             font-weight: 700;
+            white-space: nowrap;
         }
         .score {
-            font-size: 2rem;
+            font-size: 1.25rem;
             font-weight: 700;
-            margin-top: 0.5rem;
         }
         .button-container {
-            margin-top: 1.5rem;
+            margin-top: 1rem;
         }
         .btn {
             background-color: #8c24b1;
             color: white;
-            padding: 0.75rem 2rem;
-            font-size: 1rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
             font-weight: 700;
             border-radius: 0.5rem;
             border: none;
@@ -138,19 +141,21 @@
             </div>
         </div>
         <canvas id="gameCanvas" style="display:none;"></canvas>
-        <p id="gameStatus" class="game-status" style="display:none;">Current Turn: Player 1</p>
-        <div class="score-board" style="display:none;">
-            <div id="player1Card" class="player-card active">
-                <div class="player-name">Player 1</div>
-                <div id="score1" class="score">0</div>
+        <div id="gameUI" style="display:none;">
+            <div class="score-board">
+                <div id="player1Card" class="player-card active">
+                    <div class="player-name">Player 1</div>
+                    <div id="score1" class="score">0</div>
+                </div>
+                <p id="gameStatus" class="game-status">Current Turn: Player 1</p>
+                <div id="player2Card" class="player-card">
+                    <div class="player-name">Player 2</div>
+                    <div id="score2" class="score">0</div>
+                </div>
             </div>
-            <div id="player2Card" class="player-card">
-                <div class="player-name">Player 2</div>
-                <div id="score2" class="score">0</div>
+            <div class="button-container">
+                <button id="restartBtn" class="btn">Restart</button>
             </div>
-        </div>
-        <div class="button-container" style="display:none;">
-            <button id="restartBtn" class="btn">Restart</button>
         </div>
     </div>
     <div id="messageBox">
@@ -161,6 +166,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const canvas = document.getElementById('gameCanvas');
             const ctx = canvas.getContext('2d');
+            const gameUI = document.getElementById('gameUI');
             const statusEl = document.getElementById('gameStatus');
             const restartBtn = document.getElementById('restartBtn');
             const messageBox = document.getElementById('messageBox');
@@ -174,9 +180,6 @@
             const vsComputerBtn = document.getElementById('vsComputerBtn');
             const startScreen = document.getElementById('startScreen');
             const titleEl = document.getElementById('title');
-            const scoreBoard = document.querySelector('.score-board');
-            const buttonContainer = document.querySelector('.button-container');
-            const gameWrapper = document.querySelector('.game-wrapper');
 
             const boardSize = 6;
             const padding = 25;
@@ -195,10 +198,9 @@
             };
 
             const resizeCanvas = () => {
-                const availableWidth = gameWrapper.offsetWidth - (2 * padding);
-                const availableHeight = gameWrapper.offsetHeight - (titleEl.offsetHeight + statusEl.offsetHeight + scoreBoard.offsetHeight + buttonContainer.offsetHeight + (2 * padding));
-                const minDimension = Math.min(availableWidth, availableHeight);
-                cellSize = Math.floor(minDimension / (boardSize + 1));
+                const gameWrapper = document.querySelector('.game-wrapper');
+                const availableSize = Math.min(gameWrapper.offsetWidth - (2 * padding), window.innerHeight - (gameWrapper.offsetHeight - gameWrapper.querySelector('#gameCanvas').offsetHeight) - (2 * padding));
+                cellSize = Math.floor(availableSize / (boardSize + 1));
                 canvas.width = (boardSize * cellSize) + (2 * padding);
                 canvas.height = (boardSize * cellSize) + (2 * padding);
                 drawGrid();
@@ -211,7 +213,7 @@
                     currentPlayer = currentPlayer === 'player1' ? 'player2' : 'player1';
                     player1Card.classList.toggle('active', currentPlayer === 'player1');
                     player2Card.classList.toggle('active', currentPlayer === 'player2');
-                    statusEl.textContent = `Current Turn: ${currentPlayer === 'player1' ? 'Player 1' : 'Player 2'}`;
+                    statusEl.textContent = `Current Turn: ${currentPlayer === 'player1' ? (vsComputer ? 'You' : 'Player 1') : (vsComputer ? 'Computer' : 'Player 2')}`;
 
                     if (vsComputer && currentPlayer === 'player2') {
                         setTimeout(computerMove, 500);
@@ -418,20 +420,6 @@
                 }
             };
 
-            const enterFullscreen = () => {
-                const element = document.documentElement;
-                if (element.requestFullscreen) {
-                    element.requestFullscreen();
-                } else if (element.mozRequestFullScreen) {
-                    element.mozRequestFullScreen();
-                } else if (element.webkitRequestFullscreen) {
-                    element.webkitRequestFullscreen();
-                } else if (element.msRequestFullscreen) {
-                    element.msRequestFullscreen();
-                }
-            };
-
-
             const initializeGame = (mode) => {
                 vsComputer = mode === 'vs-computer';
                 lines = [];
@@ -442,11 +430,9 @@
                 
                 // Hide start screen and show game elements
                 startScreen.style.display = 'none';
-                canvas.style.display = 'block';
-                statusEl.style.display = 'block';
-                scoreBoard.style.display = 'flex';
-                buttonContainer.style.display = 'flex';
                 titleEl.style.display = 'none';
+                canvas.style.display = 'block';
+                gameUI.style.display = 'block';
 
                 // Set player names
                 document.querySelector('#player1Card .player-name').textContent = vsComputer ? 'You' : 'Player 1';
@@ -457,16 +443,12 @@
                 player2Card.classList.remove('active');
                 updateStatus();
                 statusEl.textContent = `Current Turn: ${vsComputer ? 'You' : 'Player 1'}`;
-                
-                enterFullscreen();
             };
 
             const showStartScreen = () => {
                 startScreen.style.display = 'block';
+                gameUI.style.display = 'none';
                 canvas.style.display = 'none';
-                statusEl.style.display = 'none';
-                scoreBoard.style.display = 'none';
-                buttonContainer.style.display = 'none';
                 messageBox.style.display = 'none';
                 titleEl.style.display = 'block';
             };
