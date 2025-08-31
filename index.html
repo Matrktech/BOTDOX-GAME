@@ -17,7 +17,7 @@
             flex-direction: column;
             min-height: 100vh;
             margin: 0;
-            padding: 2rem;
+            padding: 0;
             box-sizing: border-box;
             user-select: none;
             touch-action: none;
@@ -32,6 +32,10 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            width: 100%;
+            height: 100vh;
+            max-width: 100%;
+            padding: 0.5rem;
         }
         h1 {
             font-size: 2.5rem;
@@ -44,6 +48,8 @@
             background-color: #0d0d1b;
             border-radius: 0.5rem;
             touch-action: none;
+            max-width: 100%;
+            max-height: calc(100vh - 12rem);
         }
         .game-status {
             margin-top: 1rem;
@@ -198,11 +204,16 @@
                 'player2': { line: '#a464ff', box: 'rgba(164, 100, 255, 0.4)' }
             };
 
+            const playerInitials = {
+                'player1': '1',
+                'player2': '2'
+            };
+
             const resizeCanvas = () => {
                 const gameWrapper = document.querySelector('.game-wrapper');
-                const availableSize = Math.min(window.innerWidth, window.innerHeight) * 0.75;
+                const availableSize = Math.min(window.innerWidth, window.innerHeight) * 0.9;
                 cellSize = Math.floor(availableSize / (boardSize + 1));
-                padding = cellSize * 0.4;
+                padding = cellSize * 0.2;
                 dotRadius = cellSize * 0.15;
                 lineWidth = cellSize * 0.1;
 
@@ -252,6 +263,12 @@
                     const x = padding + box.x * cellSize + dotRadius;
                     const y = padding + box.y * cellSize + dotRadius;
                     ctx.fillRect(x, y, cellSize - 2 * dotRadius, cellSize - 2 * dotRadius);
+
+                    ctx.fillStyle = 'white';
+                    ctx.font = `bold ${cellSize * 0.5}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(box.initial, x + (cellSize - 2 * dotRadius) / 2, y + (cellSize - 2 * dotRadius) / 2);
                 });
 
                 lines.forEach(line => {
@@ -278,7 +295,7 @@
                     [y1, y2] = [y2, y1];
                 }
                 return lines.find(line => 
-                    line.x1 === x1 && line.y1 === y1 && line.x2 === x2 && line.y2 === y1
+                    line.x1 === x1 && line.y1 === y1 && line.x2 === x2 && line.y2 === y2
                 );
             };
 
@@ -304,7 +321,7 @@
                         const isCompleted = [top, right, bottom, left].every(line => line !== undefined);
 
                         if (isCompleted && !boxes.some(b => b.x === box.x && b.y === box.y)) {
-                            boxes.push({ x: box.x, y: box.y, color: playerColors[currentPlayer].box });
+                            boxes.push({ x: box.x, y: box.y, color: playerColors[currentPlayer].box, initial: playerInitials[currentPlayer] });
                             newBoxesCount++;
                         }
                     }
@@ -442,7 +459,9 @@
                 // Set player names
                 document.querySelector('#player1Card .player-name').textContent = vsComputer ? 'You' : 'Player 1';
                 document.querySelector('#player2Card .player-name').textContent = vsComputer ? 'Computer' : 'Player 2';
-                
+                playerInitials.player1 = vsComputer ? 'Y' : '1';
+                playerInitials.player2 = vsComputer ? 'C' : '2';
+
                 resizeCanvas();
                 player1Card.classList.add('active');
                 player2Card.classList.remove('active');
