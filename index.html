@@ -182,9 +182,10 @@
             const titleEl = document.getElementById('title');
 
             const boardSize = 6;
-            const padding = 25;
-            const dotRadius = 5;
+            let padding = 25;
+            let dotRadius = 5;
             let cellSize = 50;
+            let lineWidth = 3;
 
             let lines = [];
             let boxes = [];
@@ -199,8 +200,12 @@
 
             const resizeCanvas = () => {
                 const gameWrapper = document.querySelector('.game-wrapper');
-                const availableSize = Math.min(gameWrapper.offsetWidth - (2 * padding), window.innerHeight - (gameWrapper.offsetHeight - gameWrapper.querySelector('#gameCanvas').offsetHeight) - (2 * padding));
+                const availableSize = Math.min(window.innerWidth, window.innerHeight) * 0.75;
                 cellSize = Math.floor(availableSize / (boardSize + 1));
+                padding = cellSize * 0.5;
+                dotRadius = cellSize * 0.1;
+                lineWidth = cellSize * 0.06;
+
                 canvas.width = (boardSize * cellSize) + (2 * padding);
                 canvas.height = (boardSize * cellSize) + (2 * padding);
                 drawGrid();
@@ -240,7 +245,7 @@
             const drawGrid = () => {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.lineCap = 'round';
-                ctx.lineWidth = 3;
+                ctx.lineWidth = lineWidth;
 
                 boxes.forEach(box => {
                     ctx.fillStyle = box.color;
