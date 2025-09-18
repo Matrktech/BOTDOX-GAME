@@ -4,498 +4,927 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dots and Boxes</title>
+    <!-- Tailwind CSS CDN for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+        /* Custom styles for a better look and feel */
         body {
-            font-family: 'Roboto Mono', monospace;
-            background-color: #1a1a2e;
-            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark background as a fallback */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: background-image 1s ease-in-out; /* Smooth transition for the image change */
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            flex-direction: column;
             min-height: 100vh;
             margin: 0;
-            padding: 0;
+            color: #e2e8f0; /* Light text color */
+            padding: 20px;
             box-sizing: border-box;
-            user-select: none;
-            touch-action: none;
+            overflow: hidden; /* Hide scrollbars during animation */
         }
-        .game-wrapper {
-            background-color: #2e1a3e;
-            padding: 1rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            text-align: center;
+
+        .game-container {
+            background-color: rgba(45, 55, 72, 0.85); /* Slightly transparent */
+            backdrop-filter: blur(10px); /* Frosted glass effect */
+            -webkit-backdrop-filter: blur(10px); /* For Safari support */
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); /* Deeper shadow for depth */
+            padding: 2.5rem;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             width: 100%;
-            height: 100vh;
-            max-width: 100%;
-            padding: 0.5rem;
+            max-width: 600px; /* Max width for larger screens */
+            border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle border */
         }
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            color: #d8b8ff;
-        }
+
         canvas {
-            border: 4px solid #a464ff;
-            background-color: #0d0d1b;
-            border-radius: 0.5rem;
+            /* Canvas background color will be set dynamically by JavaScript */
+            border-radius: 0.75rem;
+            display: block;
+            margin-bottom: 1.5rem;
             touch-action: none;
-            max-width: 100%;
-            max-height: calc(100vh - 12rem);
         }
-        .game-status {
-            margin-top: 1rem;
-            font-size: 1rem;
-            font-weight: 700;
-        }
-        .score-board {
+
+        .status-area {
             display: flex;
             justify-content: space-around;
             width: 100%;
-            margin-bottom: 1rem;
-            gap: 0.5rem;
-            align-items: center;
-        }
-        .player-card {
-            background-color: #4a286c;
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            border: 2px solid transparent;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            flex: 1;
-            justify-content: center;
-        }
-        .player-card.active {
-            border-color: #f7a421;
-            box-shadow: 0 0 10px #f7a421;
-        }
-        .player-name {
-            font-size: 0.875rem;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-        .score {
+            margin-bottom: 1.5rem;
             font-size: 1.25rem;
-            font-weight: 700;
+            font-weight: bold;
+            text-align: center;
+            flex-wrap: wrap;
         }
-        .button-container {
-            margin-top: 1rem;
-        }
-        .btn {
-            background-color: #8c24b1;
-            color: white;
+
+        .player-score {
             padding: 0.5rem 1rem;
-            font-size: 0.875rem;
-            font-weight: 700;
             border-radius: 0.5rem;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.1s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            margin: 0.5rem;
+            transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, color 0.3s ease-in-out;
         }
-        .btn:hover {
-            background-color: #6a1a8c;
-            transform: scale(1.05);
-        }
-        #messageBox {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #2e1a3e;
-            color: white;
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            display: none;
+
+        .current-turn-message {
+            margin-top: 1rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            min-height: 2rem;
             text-align: center;
         }
-        #messageBox h2 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-        }
-        .mode-selection {
+
+        .button-group {
             display: flex;
-            flex-direction: column;
             gap: 1rem;
+            margin-top: 2rem;
             flex-wrap: wrap;
             justify-content: center;
-            padding: 2rem;
         }
+
+        .game-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-out, box-shadow 0.2s ease-in-out;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300%;
+            height: 300%;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            transition: all 0.75s ease-out;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            z-index: 0;
+        }
+
+        .game-button:hover::before {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+
+        .game-button span {
+            position: relative;
+            z-index: 1;
+        }
+
+        #resetButton { background-color: #ecc94b; color: #2d3748; }
+        #resetButton:hover { background-color: #d69e2e; }
+        .mode-selection-button { background-color: #63b3ed; color: #2d3748; }
+        .mode-selection-button:hover { background-color: #4299e1; }
+        #startGameButton { background-color: #48bb78; color: #2d3748; }
+        #startGameButton:hover { background-color: #38a169; }
+        #signOutButton { background-color: #e53e3e; color: #fff; }
+        #signOutButton:hover { background-color: #c53030; }
+
+        .message-box {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background-color: #2d3748; border: 2px solid #4a5568; border-radius: 1rem;
+            padding: 2rem; box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5); z-index: 1000;
+            display: none; flex-direction: column; align-items: center; text-align: center;
+            max-width: 90%; color: #e2e8f0;
+        }
+        .message-box-content { font-size: 1.25rem; margin-bottom: 1.5rem; }
+        .message-box-button {
+            background-color: #63b3ed; color: #2d3748; padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem; font-size: 1rem; font-weight: bold; cursor: pointer;
+            transition: background-color 0.2s ease-in-out; border: none;
+        }
+        .message-box-button:hover { background-color: #4299e1; }
+
+        .registration-form {
+            display: flex; flex-direction: column; gap: 1rem;
+            width: 100%; max-width: 350px; margin-bottom: 2rem;
+        }
+        .registration-form input {
+            padding: 0.75rem; border-radius: 0.5rem; border: 2px solid #4a5568;
+            background-color: #2d3748; color: #e2e8f0; font-size: 1rem;
+        }
+        .registration-form input:focus { outline: none; border-color: #63b3ed; }
+
+        .hidden { display: none !important; }
+
+        .level-buttons-container {
+            display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center;
+            max-height: 150px; overflow-y: auto; padding: 0.5rem;
+            border: 1px solid #4a5568; border-radius: 0.5rem; margin-top: 1rem;
+        }
+        .level-button {
+            padding: 0.5rem 0.8rem; border-radius: 0.5rem; font-size: 0.9rem;
+            font-weight: bold; cursor: pointer; background-color: #4a5568;
+            color: #e2e8f0; border: 1px solid #636b7a; transition: background-color 0.2s ease-in-out;
+        }
+        .level-button:hover:not(.locked):not(.selected) { background-color: #636b7a; }
+        .level-button.selected { background-color: #63b3ed; color: #2d3748; border-color: #63b3ed; }
+        .level-button.locked {
+            background-color: #3a424e; color: #9ca3af;
+            cursor: not-allowed; opacity: 0.7; border-color: #3a424e;
+        }
+
+        /* Styles for the intro screen */
+        #introScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1a202c; /* Match body background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000; /* Ensure it's on top */
+            opacity: 1;
+            transition: opacity 1s ease-out; /* Fade out effect */
+        }
+
+        #introImage {
+            max-width: 90%;
+            max-height: 90vh;
+            object-fit: contain; /* Ensure the image scales properly */
+            animation: fadeInScale 1.5s ease-out forwards; /* Animation for the image */
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
     </style>
 </head>
 <body>
-    <div class="game-wrapper">
-        <h1 id="title">Dots and Boxes</h1>
-        <div id="startScreen">
-            <div class="mode-selection">
-                <button id="twoPlayerBtn" class="btn">Two Players</button>
-                <button id="vsComputerBtn" class="btn">Vs. Computer</button>
-            </div>
-        </div>
-        <canvas id="gameCanvas" style="display:none;"></canvas>
-        <div id="gameUI" style="display:none;">
-            <div class="score-board">
-                <div id="player1Card" class="player-card active">
-                    <div class="player-name">Player 1</div>
-                    <div id="score1" class="score">0</div>
-                </div>
-                <p id="gameStatus" class="game-status">Current Turn: Player 1</p>
-                <div id="player2Card" class="player-card">
-                    <div class="player-name">Player 2</div>
-                    <div id="score2" class="score">0</div>
+
+    <!-- Intro Screen -->
+    <div id="introScreen">
+        <img id="introImage" src="Screenshot 2025-08-09 082347.png" alt="Game Intro Image">
+    </div>
+
+    <div class="game-container hidden" id="mainGameContainer">
+        <h1 class="text-4xl md:text-5xl font-extrabold mb-6 text-yellow-400">Dots and Boxes</h1>
+
+        <div id="gameContent" class="flex flex-col items-center w-full">
+            <div id="modeSelectionScreen" class="flex flex-col items-center gap-4 hidden">
+                <h2 class="text-2xl font-bold text-center mb-2">Choose Game Mode</h2>
+                <div class="button-group">
+                    <button id="selectComputerModeButton" class="game-button mode-selection-button"><span>Play with Computer</span></button>
+                    <button id="selectFriendModeButton" class="game-button mode-selection-button"><span>Play with a Friend</span></button>
                 </div>
             </div>
-            <div class="button-container">
-                <button id="restartBtn" class="btn">Restart</button>
+
+            <div id="registrationScreen" class="registration-form hidden">
+                <h2 class="text-2xl font-bold text-center mb-4" id="registrationTitle"></h2>
+                <input type="text" id="player1NameInput" placeholder="Player 1 Name" maxlength="10">
+                <input type="text" id="player2NameInput" placeholder="Player 2 Name" maxlength="10">
+                <div id="levelSelectionArea" class="hidden">
+                    <label for="gameLevelInput" class="text-sm text-gray-400 mb-2">Difficulty Level: <span id="currentUnlockedLevelDisplay">1</span></label>
+                    <input type="hidden" id="gameLevelInput" value="1">
+                    <div id="levelButtonsContainer" class="level-buttons-container"></div>
+                </div>
+                <button id="startGameButton" class="game-button mt-4"><span>Start Game</span></button>
+            </div>
+
+            <div id="gameUI" class="hidden flex flex-col items-center w-full">
+                <div class="status-area">
+                    <div id="player1Score" class="player-score"></div>
+                    <div id="player2Score" class="player-score"></div>
+                </div>
+                <div id="currentTurn" class="current-turn-message"></div>
+                <canvas id="gameCanvas"></canvas>
+                <div class="button-group">
+                    <button id="resetButton" class="game-button"><span>New Game</span></button>
+                </div>
             </div>
         </div>
     </div>
-    <div id="messageBox">
-        <h2 id="messageTitle">Game Over!</h2>
-        <button id="restartMessageBtn" class="btn mt-4">Play Again</button>
+
+    <div id="messageBox" class="message-box">
+        <div id="messageBoxContent" class="message-box-content"></div>
+        <div class="flex gap-4" id="messageBoxActions">
+            <button id="messageBoxButton" class="message-box-button">OK</button>
+        </div>
     </div>
+
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const canvas = document.getElementById('gameCanvas');
-            const ctx = canvas.getContext('2d');
-            const gameUI = document.getElementById('gameUI');
-            const statusEl = document.getElementById('gameStatus');
-            const restartBtn = document.getElementById('restartBtn');
-            const messageBox = document.getElementById('messageBox');
-            const messageTitle = document.getElementById('messageTitle');
-            const restartMessageBtn = document.getElementById('restartMessageBtn');
-            const player1Card = document.getElementById('player1Card');
-            const player2Card = document.getElementById('player2Card');
-            const score1El = document.getElementById('score1');
-            const score2El = document.getElementById('score2');
-            const twoPlayerBtn = document.getElementById('twoPlayerBtn');
-            const vsComputerBtn = document.getElementById('vsComputerBtn');
-            const startScreen = document.getElementById('startScreen');
-            const titleEl = document.getElementById('title');
-
-            const boardSize = 6;
-            let padding = 25;
-            let dotRadius = 5;
-            let cellSize = 50;
-            let lineWidth = 3;
-
-            let lines = [];
-            let boxes = [];
-            let scores = { 'player1': 0, 'player2': 0 };
-            let currentPlayer = 'player1';
-            let vsComputer = false;
-
-            const playerColors = {
-                'player1': { line: '#f7a421', box: 'rgba(247, 164, 33, 0.4)' },
-                'player2': { line: '#a464ff', box: 'rgba(164, 100, 255, 0.4)' }
+        /**
+         * --- BACKGROUND IMAGE LOADER ---
+         * Sets a new random, attractive background image from a reliable online source.
+         * Includes preloading and error handling for a smooth, robust experience.
+         */
+        function setNewGameBackground() {
+            const imageUrl = `https://picsum.photos/1920/1080?blur=2&random=${Math.random()}`;
+            console.log(`Fetching new background image from: ${imageUrl}`);
+            const img = new Image();
+            
+            img.onload = function() {
+                document.body.style.backgroundImage = `url(${img.src})`;
+                console.log("Background image loaded and set successfully.");
             };
 
-            const playerInitials = {
-                'player1': '1',
-                'player2': '2'
+            img.onerror = function() {
+                console.error("Failed to load background image. Using fallback color.");
             };
+            
+            img.src = imageUrl;
+        }
 
-            const resizeCanvas = () => {
-                const gameWrapper = document.querySelector('.game-wrapper');
-                const availableSize = Math.min(window.innerWidth, window.innerHeight) * 0.9;
-                cellSize = Math.floor(availableSize / (boardSize + 1));
-                
-                // Increase size for mobile screens to be more tappable
-                const isMobile = Math.min(window.innerWidth, window.innerHeight) < 768;
-                const scaleFactor = isMobile ? 1.5 : 1.2;
-                cellSize *= scaleFactor;
-                
-                padding = cellSize * 0.2;
-                dotRadius = cellSize * 0.15;
-                lineWidth = cellSize * 0.1;
+        // Canvas and context
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
 
-                canvas.width = (boardSize * cellSize) + (2 * padding);
-                canvas.height = (boardSize * cellSize) + (2 * padding);
-                drawGrid();
-            };
+        // Game configuration constants
+        let GRID_COLS, GRID_ROWS;
+        const MIN_COLS = 5, MAX_COLS = 8, MIN_ROWS = 4, MAX_ROWS = 7;
+        const DOT_RADIUS = 8, LINE_THICKNESS = 4;
+        const HOVER_LINE_COLOR = 'rgba(255, 255, 255, 0.6)'; // Brighter hover line
 
-            window.addEventListener('resize', resizeCanvas);
+        // --- DYNAMIC COLOR PALETTES ---
+        const COLOR_PALETTES = [
+            {
+                name: "Neon Dream",
+                dot: '#FFD700', // Gold
+                player1Line: '#39FF14', // Neon Green
+                player2Line: '#FF1493', // Deep Pink
+                player1BoxFill: 'rgba(57, 255, 20, 0.4)',
+                player2BoxFill: 'rgba(255, 20, 147, 0.4)',
+                player1IconBg: '39FF14', // Hex color for placehold.co background
+                player1IconText: '2d3748', // Hex color for placehold.co text
+                player2IconBg: 'FF1493',
+                player2IconText: 'FFFFFF',
+                canvasBg: '#F0F8FF', // AliceBlue
+                player1ScoreBg: '#39FF14',
+                player2ScoreBg: '#FF1493',
+                activeScoreTextColor: '#2d3748',
+                inactiveScoreTextColor: '#e2e8f0'
+            },
+            {
+                name: "Sunset Blaze",
+                dot: '#FFFF00', // Bright Yellow
+                player1Line: '#FF4500', // OrangeRed
+                player2Line: '#00BFFF', // Deep Sky Blue
+                player1BoxFill: 'rgba(255, 69, 0, 0.4)',
+                player2BoxFill: 'rgba(0, 191, 255, 0.4)',
+                player1IconBg: 'FF4500',
+                player1IconText: 'FFFFFF',
+                player2IconBg: '00BFFF',
+                player2IconText: '2d3748',
+                canvasBg: '#FFFACD', // LemonChiffon
+                player1ScoreBg: '#FF4500',
+                player2ScoreBg: '#00BFFF',
+                activeScoreTextColor: '#FFFFFF',
+                inactiveScoreTextColor: '#e2e8f0'
+            },
+            {
+                name: "Vivid Glow",
+                dot: '#8A2BE2', // Blue Violet
+                player1Line: '#FF69B4', // Hot Pink
+                player2Line: '#00CED1', // Dark Cyan
+                player1BoxFill: 'rgba(255, 105, 180, 0.4)',
+                player2BoxFill: 'rgba(0, 206, 209, 0.4)',
+                player1IconBg: 'FF69B4',
+                player1IconText: '2d3748',
+                player2IconBg: '00CED1',
+                player2IconText: 'FFFFFF',
+                canvasBg: '#F8F8FF', // GhostWhite
+                player1ScoreBg: '#FF69B4',
+                player2ScoreBg: '#00CED1',
+                activeScoreTextColor: '#FFFFFF',
+                inactiveScoreTextColor: '#e2e8f0'
+            },
+            {
+                name: "Electric Dreams",
+                dot: '#ADFF2F', // GreenYellow
+                player1Line: '#FFD700', // Gold
+                player2Line: '#8A2BE2', // BlueViolet
+                player1BoxFill: 'rgba(255, 215, 0, 0.4)',
+                player2BoxFill: 'rgba(138, 43, 226, 0.4)',
+                player1IconBg: 'FFD700',
+                player1IconText: '2d3748',
+                player2IconBg: '8A2BE2',
+                player2IconText: 'FFFFFF',
+                canvasBg: '#F5FFFA', // MintCream
+                player1ScoreBg: '#FFD700',
+                player2ScoreBg: '#8A2BE2',
+                activeScoreTextColor: '#2d3748',
+                inactiveScoreTextColor: '#e2e8f0'
+            },
+            {
+                name: "Tropical Punch",
+                dot: '#FF8C00', // Dark Orange
+                player1Line: '#32CD32', // Lime Green
+                player2Line: '#DA70D6', // Orchid
+                player1BoxFill: 'rgba(50, 205, 50, 0.4)',
+                player2BoxFill: 'rgba(218, 112, 214, 0.4)',
+                player1IconBg: '32CD32',
+                player1IconText: '2d3748',
+                player2IconBg: 'DA70D6',
+                player2IconText: '2d3748',
+                canvasBg: '#FFE4E1', // MistyRose
+                player1ScoreBg: '#32CD32',
+                player2ScoreBg: '#DA70D6',
+                activeScoreTextColor: '#2d3748',
+                inactiveScoreTextColor: '#e2e8f0'
+            }
+        ];
 
-            const switchTurn = (scored) => {
-                if (!scored) {
-                    currentPlayer = currentPlayer === 'player1' ? 'player2' : 'player1';
-                    player1Card.classList.toggle('active', currentPlayer === 'player1');
-                    player2Card.classList.toggle('active', currentPlayer === 'player2');
-                    statusEl.textContent = `Current Turn: ${currentPlayer === 'player1' ? (vsComputer ? 'You' : 'Player 1') : (vsComputer ? 'Computer' : 'Player 2')}`;
+        let currentPalette; // Variable to hold the randomly selected palette
+        let player1Icon = new Image(); // Image object for Player 1's icon
+        let player2Icon = new Image(); // Image object for Player 2's icon
+        let imagesLoaded = false; // Flag to ensure images are loaded before drawing
 
-                    if (vsComputer && currentPlayer === 'player2') {
-                        setTimeout(computerMove, 500);
-                    }
-                }
-            };
+        // Game state
+        let dots = [], horizontalLines = [], verticalLines = [], boxes = [];
+        let playerScores = {}, currentPlayer = '', isGameActive = true, isVsComputer = false;
+        let gameLevel = 1, currentUnlockedLevel = 1;
+        let player1Name = '', player2Name = '', COMPUTER_NAME = 'Computer';
 
-            const updateStatus = () => {
-                score1El.textContent = scores['player1'];
-                score2El.textContent = scores['player2'];
+        // DOM Elements
+        const introScreen = document.getElementById('introScreen');
+        const mainGameContainer = document.getElementById('mainGameContainer');
+        const modeSelectionScreen = document.getElementById('modeSelectionScreen');
+        const registrationScreen = document.getElementById('registrationScreen');
+        const gameUI = document.getElementById('gameUI');
+        const selectComputerModeButton = document.getElementById('selectComputerModeButton');
+        const selectFriendModeButton = document.getElementById('selectFriendModeButton');
+        const registrationTitle = document.getElementById('registrationTitle');
+        const player1NameInput = document.getElementById('player1NameInput');
+        const player2NameInput = document.getElementById('player2NameInput');
+        const levelSelectionArea = document.getElementById('levelSelectionArea');
+        const gameLevelInput = document.getElementById('gameLevelInput');
+        const currentUnlockedLevelDisplay = document.getElementById('currentUnlockedLevelDisplay');
+        const levelButtonsContainer = document.getElementById('levelButtonsContainer');
+        const startGameButton = document.getElementById('startGameButton');
+        const player1ScoreDisplay = document.getElementById('player1Score');
+        const player2ScoreDisplay = document.getElementById('player2Score');
+        const currentTurnDisplay = document.getElementById('currentTurn');
+        const resetButton = document.getElementById('resetButton');
+        const messageBox = document.getElementById('messageBox');
+        const messageBoxContent = document.getElementById('messageBoxContent');
+        const messageBoxActions = document.getElementById('messageBoxActions');
 
-                if (boxes.length === boardSize * boardSize) {
-                    let winnerText = "It's a tie!";
-                    if (scores['player1'] > scores['player2']) {
-                        winnerText = `${vsComputer ? 'You' : 'Player 1'} win!`;
-                    } else if (scores['player2'] > scores['player1']) {
-                        winnerText = `${vsComputer ? 'The computer' : 'Player 2'} wins!`;
-                    }
-                    messageTitle.textContent = `Game Over! ${winnerText}`;
-                    messageBox.style.display = 'block';
-                }
-            };
+        let cellSize, offsetX, offsetY;
 
-            const drawGrid = () => {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.lineCap = 'round';
-                ctx.lineWidth = lineWidth;
+        function showMessageBox(message) {
+            messageBoxContent.textContent = message;
+            messageBoxActions.innerHTML = `<button id="messageBoxButton" class="message-box-button">OK</button>`;
+            document.getElementById('messageBoxButton').addEventListener('click', hideMessageBox, { once: true });
+            messageBox.style.display = 'flex';
+        }
 
-                boxes.forEach(box => {
-                    ctx.fillStyle = box.color;
-                    const x = padding + box.x * cellSize + dotRadius;
-                    const y = padding + box.y * cellSize + dotRadius;
-                    ctx.fillRect(x, y, cellSize - 2 * dotRadius, cellSize - 2 * dotRadius);
+        function hideMessageBox() {
+            messageBox.style.display = 'none';
+        }
 
-                    ctx.fillStyle = 'white';
-                    ctx.font = `bold ${cellSize * 0.5}px Arial`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(box.initial, x + (cellSize - 2 * dotRadius) / 2, y + (cellSize - 2 * dotRadius) / 2);
-                });
+        function generateRandomGridDimensions() {
+            GRID_COLS = Math.floor(Math.random() * (MAX_COLS - MIN_COLS + 1)) + MIN_COLS;
+            GRID_ROWS = Math.floor(Math.random() * (MAX_ROWS - MIN_ROWS + 1)) + MIN_ROWS;
+            console.log(`New game grid: ${GRID_COLS} columns x ${GRID_ROWS} rows`);
+        }
 
-                lines.forEach(line => {
-                    ctx.strokeStyle = line.color;
-                    ctx.beginPath();
-                    ctx.moveTo(padding + line.x1 * cellSize, padding + line.y1 * cellSize);
-                    ctx.lineTo(padding + line.x2 * cellSize, padding + line.y2 * cellSize);
-                    ctx.stroke();
-                });
+        function generateLevelButtons() {
+            levelButtonsContainer.innerHTML = '';
+            for (let i = 1; i <= 100; i++) {
+                const levelButton = document.createElement('button');
+                levelButton.classList.add('level-button');
+                levelButton.textContent = i;
+                levelButton.dataset.level = i;
 
-                ctx.fillStyle = '#ff8c42';
-                for (let i = 0; i < boardSize + 1; i++) {
-                    for (let j = 0; j < boardSize + 1; j++) {
-                        ctx.beginPath();
-                        ctx.arc(padding + i * cellSize, padding + j * cellSize, dotRadius, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                }
-            };
-
-            const findLine = (x1, y1, x2, y2) => {
-                if (x1 > x2 || y1 > y2) {
-                    [x1, x2] = [x2, x1];
-                    [y1, y2] = [y2, y1];
-                }
-                return lines.find(line => 
-                    line.x1 === x1 && line.y1 === y1 && line.x2 === x2 && line.y2 === y2
-                );
-            };
-
-            const checkForCompletedBox = (x, y, isVertical) => {
-                let newBoxesCount = 0;
-                let potentialBoxes = [];
-
-                if (isVertical) {
-                    potentialBoxes.push({ x: x - 1, y: y });
-                    potentialBoxes.push({ x: x, y: y });
+                if (i > currentUnlockedLevel) {
+                    levelButton.classList.add('locked');
+                    levelButton.disabled = true;
                 } else {
-                    potentialBoxes.push({ x: x, y: y - 1 });
-                    potentialBoxes.push({ x: x, y: y });
-                }
-
-                potentialBoxes.forEach(box => {
-                    if (box.x >= 0 && box.x < boardSize && box.y >= 0 && box.y < boardSize) {
-                        const top = findLine(box.x, box.y, box.x + 1, box.y);
-                        const right = findLine(box.x + 1, box.y, box.x + 1, box.y + 1);
-                        const bottom = findLine(box.x, box.y + 1, box.x + 1, box.y + 1);
-                        const left = findLine(box.x, box.y, box.x, box.y + 1);
-
-                        const isCompleted = [top, right, bottom, left].every(line => line !== undefined);
-
-                        if (isCompleted && !boxes.some(b => b.x === box.x && b.y === box.y)) {
-                            boxes.push({ x: box.x, y: box.y, color: playerColors[currentPlayer].box, initial: playerInitials[currentPlayer] });
-                            newBoxesCount++;
-                        }
-                    }
-                });
-                return newBoxesCount;
-            };
-
-            const handleTurn = (x1, y1, x2, y2) => {
-                if (x1 > x2 || y1 > y2) {
-                    [x1, x2] = [x2, x1];
-                    [y1, y2] = [y2, y1];
-                }
-
-                if (findLine(x1, y1, x2, y2)) {
-                    return;
-                }
-
-                lines.push({ x1, y1, x2, y2, color: playerColors[currentPlayer].line });
-                const newBoxes = checkForCompletedBox(Math.min(x1, x2), Math.min(y1, y2), x1 === x2);
-                scores[currentPlayer] += newBoxes;
-                
-                drawGrid();
-                updateStatus();
-                switchTurn(newBoxes > 0);
-            };
-
-            const handleInput = (event) => {
-                if (currentPlayer === 'player2' && vsComputer) {
-                    return;
-                }
-
-                const rect = canvas.getBoundingClientRect();
-                let mouseX, mouseY;
-
-                if (event.type.startsWith('touch')) {
-                    const touch = event.touches[0];
-                    mouseX = touch.clientX - rect.left;
-                    mouseY = touch.clientY - rect.top;
-                    event.preventDefault();
-                } else {
-                    mouseX = event.clientX - rect.left;
-                    mouseY = event.clientY - rect.top;
-                }
-                
-                const gridX = Math.round((mouseX - padding) / cellSize);
-                const gridY = Math.round((mouseY - padding) / cellSize);
-
-                const dx = Math.abs(mouseX - (padding + gridX * cellSize));
-                const dy = Math.abs(mouseY - (padding + gridY * cellSize));
-
-                let x1, y1, x2, y2;
-
-                if (dx < cellSize / 4 && dy > cellSize / 4) {
-                    if (gridY >= 0 && gridY < boardSize && gridX >= 0 && gridX < boardSize + 1) {
-                        x1 = x2 = gridX;
-                        y1 = gridY;
-                        y2 = gridY + 1;
-                    } else { return; }
-                } else if (dy < cellSize / 4 && dx > cellSize / 4) {
-                    if (gridX >= 0 && gridX < boardSize && gridY >= 0 && gridY < boardSize + 1) {
-                        x1 = gridX;
-                        x2 = gridX + 1;
-                        y1 = y2 = gridY;
-                    } else { return; }
-                } else { return; }
-                
-                handleTurn(x1, y1, x2, y2);
-            };
-
-            const computerMove = () => {
-                const availableMoves = [];
-                for (let i = 0; i <= boardSize; i++) {
-                    for (let j = 0; j < boardSize; j++) {
-                        if (!findLine(i, j, i, j + 1)) {
-                            availableMoves.push({ x1: i, y1: j, x2: i, y2: j + 1, isVertical: true });
-                        }
-                    }
-                }
-                for (let i = 0; i < boardSize; i++) {
-                    for (let j = 0; j <= boardSize; j++) {
-                        if (!findLine(i, j, i + 1, j)) {
-                            availableMoves.push({ x1: i, y1: j, x2: i + 1, y2: j, isVertical: false });
-                        }
-                    }
-                }
-
-                // Simple computer logic: prioritize completing a box
-                for (const move of availableMoves) {
-                    const tempLines = [...lines, { ...move, color: 'temp' }];
-                    const isVertical = move.isVertical;
-                    let newBoxes = 0;
-                    
-                    const potentialBoxes = isVertical ? [{ x: move.x1 - 1, y: move.y1 }, { x: move.x1, y: move.y1 }] : [{ x: move.x1, y: move.y1 - 1 }, { x: move.x1, y: move.y1 }];
-                    
-                    potentialBoxes.forEach(box => {
-                        if (box.x >= 0 && box.x < boardSize && box.y >= 0 && box.y < boardSize) {
-                             const top = tempLines.find(l => l.x1 === box.x && l.y1 === box.y && l.x2 === box.x + 1 && l.y2 === box.y);
-                             const right = tempLines.find(l => l.x1 === box.x + 1 && l.y1 === box.y && l.x2 === box.x + 1 && l.y2 === box.y + 1);
-                             const bottom = tempLines.find(l => l.x1 === box.x && l.y1 === box.y + 1 && l.x2 === box.x + 1 && l.y2 === box.y + 1);
-                             const left = tempLines.find(l => l.x1 === box.x && l.y1 === box.y && l.x2 === box.x && l.y2 === box.y + 1);
-
-                             if (top && right && bottom && left && !boxes.some(b => b.x === box.x && b.y === box.y)) {
-                                 newBoxes++;
-                             }
-                        }
+                    levelButton.addEventListener('click', () => {
+                        document.querySelectorAll('.level-button.selected').forEach(btn => btn.classList.remove('selected'));
+                        levelButton.classList.add('selected');
+                        gameLevelInput.value = i;
                     });
+                }
+                levelButtonsContainer.appendChild(levelButton);
+            }
+            const defaultSelectedButton = document.querySelector(`.level-button[data-level="${currentUnlockedLevel}"]`);
+            if (defaultSelectedButton) {
+                defaultSelectedButton.classList.add('selected');
+                gameLevelInput.value = currentUnlockedLevel;
+            }
+            currentUnlockedLevelDisplay.textContent = currentUnlockedLevel;
+        }
 
-                    if (newBoxes > 0) {
-                        handleTurn(move.x1, move.y1, move.x2, move.y2);
-                        return;
+        function selectComputerMode() {
+            isVsComputer = true;
+            player2NameInput.value = COMPUTER_NAME;
+            player2NameInput.disabled = true;
+            levelSelectionArea.classList.remove('hidden');
+            registrationTitle.textContent = 'Play with Computer';
+            modeSelectionScreen.classList.add('hidden');
+            registrationScreen.classList.remove('hidden');
+        }
+
+        function selectFriendMode() {
+            isVsComputer = false;
+            player2NameInput.value = '';
+            player2NameInput.disabled = false;
+            levelSelectionArea.classList.add('hidden');
+            registrationTitle.textContent = '2 Players';
+            modeSelectionScreen.classList.add('hidden');
+            registrationScreen.classList.remove('hidden');
+        }
+
+        function handleStartGame() {
+            const p1Name = player1NameInput.value.trim();
+            const p2Name = player2NameInput.value.trim();
+
+            if (p1Name === '' || p2Name === '') { return showMessageBox('Please enter names for both players.'); }
+            if (p1Name === p2Name) { return showMessageBox('Player names cannot be identical.'); }
+
+            if (isVsComputer) {
+                const selectedLevel = parseInt(gameLevelInput.value);
+                if (isNaN(selectedLevel) || selectedLevel < 1 || selectedLevel > currentUnlockedLevel) {
+                    return showMessageBox(`Please select a difficulty level between 1 and ${currentUnlockedLevel}.`);
+                }
+                gameLevel = selectedLevel;
+            } else {
+                gameLevel = 1; // AI level is irrelevant in 2P mode
+            }
+            player1Name = p1Name;
+            player2Name = p2Name;
+
+            registrationScreen.classList.add('hidden');
+            gameUI.classList.remove('hidden');
+            
+            setNewGameBackground();
+            generateRandomGridDimensions();
+            initializeGame();
+        }
+
+        function initializeGame() {
+            // Select a random color palette for the new game
+            currentPalette = COLOR_PALETTES[Math.floor(Math.random() * COLOR_PALETTES.length)];
+            console.log(`Selected color palette: ${currentPalette.name}`);
+
+            // Apply canvas background color from the selected palette
+            canvas.style.backgroundColor = currentPalette.canvasBg;
+
+            const containerWidth = canvas.parentElement.clientWidth;
+            const maxCanvasWidth = Math.min(containerWidth, 500);
+            cellSize = (maxCanvasWidth) / (GRID_COLS);
+            canvas.width = (GRID_COLS - 1) * cellSize + (2 * DOT_RADIUS);
+            canvas.height = (GRID_ROWS - 1) * cellSize + (2 * DOT_RADIUS);
+            offsetX = DOT_RADIUS;
+            offsetY = DOT_RADIUS;
+
+            dots = [];
+            for (let r = 0; r < GRID_ROWS; r++) {
+                for (let c = 0; c < GRID_COLS; c++) {
+                    dots.push({ x: offsetX + c * cellSize, y: offsetY + r * cellSize });
+                }
+            }
+
+            horizontalLines = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS - 1).fill(null));
+            verticalLines = Array(GRID_ROWS - 1).fill(null).map(() => Array(GRID_COLS).fill(null));
+            boxes = Array(GRID_ROWS - 1).fill(null).map(() => Array(GRID_COLS - 1).fill(null));
+            playerScores = { [player1Name]: 0, [player2Name]: 0 };
+            currentPlayer = player1Name;
+            isGameActive = true;
+            
+            // --- Set and preload player icons ---
+            imagesLoaded = false;
+            let loadedCount = 0;
+            const totalImages = 2; // Two player icons
+
+            player1Icon.onload = () => {
+                loadedCount++;
+                if (loadedCount === totalImages) {
+                    imagesLoaded = true;
+                    startGameAfterAssetsLoad();
+                }
+            };
+            player2Icon.onload = () => {
+                loadedCount++;
+                if (loadedCount === totalImages) {
+                    imagesLoaded = true;
+                    startGameAfterAssetsLoad();
+                }
+            };
+            
+            // Generate icon URLs using placehold.co
+            // Use player's first initial for the text in the icon
+            const p1Initial = player1Name.charAt(0).toUpperCase();
+            const p2Initial = player2Name.charAt(0).toUpperCase();
+
+            player1Icon.src = `https://placehold.co/100x100/${currentPalette.player1IconBg}/${currentPalette.player1IconText}?text=${p1Initial}&font=sans-serif`;
+            player2Icon.src = `https://placehold.co/100x100/${currentPalette.player2IconBg}/${currentPalette.player2IconText}?text=${p2Initial}&font=sans-serif`;
+
+            // If images are already cached/loaded, call directly
+            if (player1Icon.complete && player2Icon.complete) {
+                imagesLoaded = true;
+                startGameAfterAssetsLoad();
+            }
+
+            function startGameAfterAssetsLoad() {
+                updateStatusDisplay();
+                drawGame();
+
+                if (isVsComputer && currentPlayer === COMPUTER_NAME) {
+                    setTimeout(computerMove, 500);
+                }
+            }
+        }
+
+        function drawGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Draw boxes
+            for (let r = 0; r < GRID_ROWS - 1; r++) {
+                for (let c = 0; c < GRID_COLS - 1; c++) {
+                    if (boxes[r][c]) {
+                        const boxX = offsetX + c * cellSize;
+                        const boxY = offsetY + r * cellSize;
+                        
+                        // Fill with transparent color first, then draw the image
+                        ctx.fillStyle = (boxes[r][c] === player1Name) ? currentPalette.player1BoxFill : currentPalette.player2BoxFill;
+                        ctx.fillRect(boxX, boxY, cellSize, cellSize);
+
+                        // Draw the player's icon if loaded
+                        if (imagesLoaded) {
+                            const iconToDraw = (boxes[r][c] === player1Name) ? player1Icon : player2Icon;
+                            // Ensure the icon is drawn within the box, slightly padded
+                            const iconPadding = cellSize * 0.15; // 15% padding
+                            ctx.drawImage(iconToDraw, boxX + iconPadding, boxY + iconPadding, cellSize - (2 * iconPadding), cellSize - (2 * iconPadding));
+                        }
                     }
                 }
-                
-                // If no box can be completed, make a random move
-                if (availableMoves.length > 0) {
-                    const randomMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
-                    handleTurn(randomMove.x1, randomMove.y1, randomMove.x2, randomMove.y2);
+            }
+            // Draw lines
+            ctx.lineWidth = LINE_THICKNESS;
+            ctx.lineCap = 'round';
+            for (let r = 0; r < GRID_ROWS; r++) {
+                for (let c = 0; c < GRID_COLS - 1; c++) {
+                    if (horizontalLines[r][c]) {
+                        ctx.strokeStyle = horizontalLines[r][c] === player1Name ? currentPalette.player1Line : currentPalette.player2Line;
+                        ctx.beginPath();
+                        ctx.moveTo(dots[r * GRID_COLS + c].x, dots[r * GRID_COLS + c].y);
+                        ctx.lineTo(dots[r * GRID_COLS + c + 1].x, dots[r * GRID_COLS + c + 1].y);
+                        ctx.stroke();
+                    }
                 }
-            };
+            }
+            for (let r = 0; r < GRID_ROWS - 1; r++) {
+                for (let c = 0; c < GRID_COLS; c++) {
+                    if (verticalLines[r][c]) {
+                        ctx.strokeStyle = verticalLines[r][c] === player1Name ? currentPalette.player1Line : currentPalette.player2Line;
+                        ctx.beginPath();
+                        ctx.moveTo(dots[r * GRID_COLS + c].x, dots[r * GRID_COLS + c].y);
+                        ctx.lineTo(dots[(r + 1) * GRID_COLS + c].x, dots[(r + 1) * GRID_COLS + c].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            // Draw dots
+            ctx.fillStyle = currentPalette.dot;
+            dots.forEach(dot => {
+                ctx.beginPath();
+                ctx.arc(dot.x, dot.y, DOT_RADIUS, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
 
-            const initializeGame = (mode) => {
-                vsComputer = mode === 'vs-computer';
-                lines = [];
-                boxes = [];
-                scores = { 'player1': 0, 'player2': 0 };
-                currentPlayer = 'player1';
-                messageBox.style.display = 'none';
+        function updateStatusDisplay() {
+            player1ScoreDisplay.textContent = `${player1Name}: ${playerScores[player1Name]}`;
+            player2ScoreDisplay.textContent = `${player2Name}: ${playerScores[player2Name]}`;
+            
+            // Dynamically set score display styles based on current player and palette
+            if (currentPlayer === player1Name) {
+                player1ScoreDisplay.style.backgroundColor = currentPalette.player1ScoreBg;
+                player1ScoreDisplay.style.color = currentPalette.activeScoreTextColor;
+                player1ScoreDisplay.style.border = `2px solid ${currentPalette.player1Line}`;
                 
-                // Hide start screen and show game elements
-                startScreen.style.display = 'none';
-                titleEl.style.display = 'none';
-                canvas.style.display = 'block';
-                gameUI.style.display = 'block';
+                player2ScoreDisplay.style.backgroundColor = 'transparent';
+                player2ScoreDisplay.style.color = currentPalette.inactiveScoreTextColor;
+                player2ScoreDisplay.style.border = `2px solid transparent`; // Reset border
+            } else {
+                player2ScoreDisplay.style.backgroundColor = currentPalette.player2ScoreBg;
+                player2ScoreDisplay.style.color = currentPalette.activeScoreTextColor;
+                player2ScoreDisplay.style.border = `2px solid ${currentPalette.player2Line}`;
 
-                // Set player names
-                document.querySelector('#player1Card .player-name').textContent = vsComputer ? 'You' : 'Player 1';
-                document.querySelector('#player2Card .player-name').textContent = vsComputer ? 'Computer' : 'Player 2';
-                playerInitials.player1 = vsComputer ? 'Y' : '1';
-                playerInitials.player2 = vsComputer ? 'C' : '2';
+                player1ScoreDisplay.style.backgroundColor = 'transparent';
+                player1ScoreDisplay.style.color = currentPalette.inactiveScoreTextColor;
+                player1ScoreDisplay.style.border = `2px solid transparent`; // Reset border
+            }
 
-                resizeCanvas();
-                player1Card.classList.add('active');
-                player2Card.classList.remove('active');
-                updateStatus();
-                statusEl.textContent = `Current Turn: ${vsComputer ? 'You' : 'Player 1'}`;
-            };
+            currentTurnDisplay.textContent = isGameActive ? `${currentPlayer}'s turn` : 'Game Over';
+        }
 
-            const showStartScreen = () => {
-                startScreen.style.display = 'block';
-                gameUI.style.display = 'none';
-                canvas.style.display = 'none';
-                messageBox.style.display = 'none';
-                titleEl.style.display = 'block';
-            };
+        function handleMouseMove(event) {
+            if (!isGameActive) return;
+            drawGame(); // Redraw to clear previous hover
+            const [lineType, r, c] = getLineFromEvent(event);
+            if (lineType && (
+                (lineType === 'h' && !horizontalLines[r][c]) || 
+                (lineType === 'v' && !verticalLines[r][c])
+            )) {
+                drawHoverLine(lineType, r, c);
+            }
+        }
+
+        function drawHoverLine(type, r, c) {
+            ctx.strokeStyle = HOVER_LINE_COLOR;
+            ctx.lineWidth = LINE_THICKNESS;
+            ctx.beginPath();
+            if (type === 'h') {
+                ctx.moveTo(dots[r * GRID_COLS + c].x, dots[r * GRID_COLS + c].y);
+                ctx.lineTo(dots[r * GRID_COLS + c + 1].x, dots[r * GRID_COLS + c + 1].y);
+            } else {
+                ctx.moveTo(dots[r * GRID_COLS + c].x, dots[r * GRID_COLS + c].y);
+                ctx.lineTo(dots[(r + 1) * GRID_COLS + c].x, dots[(r + 1) * GRID_COLS + c].y);
+            }
+            ctx.stroke();
+        }
+
+        function getLineFromEvent(event) {
+            const rect = canvas.getBoundingClientRect();
+            const x = (event.touches ? event.touches[0].clientX : event.clientX) - rect.left;
+            const y = (event.touches ? event.touches[0].clientY : event.clientY) - rect.top;
+            const snapThreshold = cellSize / 3;
+
+            for (let r = 0; r < GRID_ROWS; r++) {
+                for (let c = 0; c < GRID_COLS - 1; c++) {
+                    const dot1 = dots[r * GRID_COLS + c];
+                    if (Math.abs(y - dot1.y) < snapThreshold && x > dot1.x && x < dot1.x + cellSize) {
+                        return ['h', r, c];
+                    }
+                }
+            }
+            for (let r = 0; r < GRID_ROWS - 1; r++) {
+                for (let c = 0; c < GRID_COLS; c++) {
+                    const dot1 = dots[r * GRID_COLS + c];
+                    if (Math.abs(x - dot1.x) < snapThreshold && y > dot1.y && y < dot1.y + cellSize) {
+                        return ['v', r, c];
+                    }
+                }
+            }
+            return [null, null, null];
+        }
+
+        function handleClick(event) {
+            if (!isGameActive || (isVsComputer && currentPlayer === COMPUTER_NAME)) return;
+            const [lineType, r, c] = getLineFromEvent(event);
+            if (lineType && (
+                (lineType === 'h' && !horizontalLines[r][c]) || 
+                (lineType === 'v' && !verticalLines[r][c])
+            )) {
+                claimLine(lineType, r, c);
+            }
+        }
+
+        function claimLine(type, r, c) {
+            let boxesCompleted = 0;
+            const playerWhoMoved = currentPlayer;
+            if (type === 'h') {
+                horizontalLines[r][c] = playerWhoMoved;
+                if (r > 0 && isBoxComplete(r - 1, c)) { boxes[r-1][c] = playerWhoMoved; boxesCompleted++; }
+                if (r < GRID_ROWS - 1 && isBoxComplete(r, c)) { boxes[r][c] = playerWhoMoved; boxesCompleted++; }
+            } else { // 'v'
+                verticalLines[r][c] = playerWhoMoved;
+                if (c > 0 && isBoxComplete(r, c - 1)) { boxes[r][c-1] = playerWhoMoved; boxesCompleted++; }
+                if (c < GRID_COLS - 1 && isBoxComplete(r, c)) { boxes[r][c] = playerWhoMoved; boxesCompleted++; }
+            }
+
+            if (boxesCompleted > 0) {
+                playerScores[playerWhoMoved] += boxesCompleted;
+            } else {
+                currentPlayer = (currentPlayer === player1Name) ? player2Name : player1Name;
+            }
+
+            if (isGameOver()) {
+                isGameActive = false;
+                endGame();
+            } else {
+                 updateStatusDisplay();
+                if (isVsComputer && currentPlayer === COMPUTER_NAME) {
+                    setTimeout(computerMove, 500);
+                }
+            }
+            drawGame();
+        }
+
+        const isBoxComplete = (r, c) => horizontalLines[r][c] && horizontalLines[r + 1][c] && verticalLines[r][c] && verticalLines[r][c + 1];
+        const isGameOver = () => playerScores[player1Name] + playerScores[player2Name] === (GRID_ROWS - 1) * (GRID_COLS - 1);
+
+        function endGame() {
+            isGameActive = false;
+            let winnerMessage;
+            if (playerScores[player1Name] > playerScores[player2Name]) {
+                winnerMessage = `${player1Name} wins with ${playerScores[player1Name]} boxes!`;
+                if (isVsComputer && player1Name !== COMPUTER_NAME && gameLevel === currentUnlockedLevel) {
+                    currentUnlockedLevel++;
+                }
+            } else if (playerScores[player2Name] > playerScores[player1Name]) {
+                winnerMessage = `${player2Name} wins!`;
+            } else {
+                winnerMessage = "It's a draw!";
+            }
+            updateStatusDisplay();
+            showMessageBox(winnerMessage);
+        }
+
+        function resetGame() {
+            gameUI.classList.add('hidden');
+            modeSelectionScreen.classList.remove('hidden');
+            player1NameInput.value = '';
+            player2NameInput.value = '';
+            // Added to show intro screen again on reset
+            introScreen.classList.remove('hidden');
+            introScreen.style.opacity = 1;
+            mainGameContainer.classList.add('hidden');
+            setTimeout(hideIntroScreen, 2000); // Re-run intro animation on reset
+        }
+
+        // --- AI FUNCTIONS ---
+        function computerMove() {
+            let move = findLineToCompleteBox();
+            if (!move) {
+                move = findSafeLine();
+            }
+            if (!move) {
+                move = findRandomLine();
+            }
+
+            if (move) {
+                claimLine(move.type, move.r, move.c);
+            }
+        }
+
+        function countSides(r, c) {
+            let count = 0;
+            if (horizontalLines[r] && horizontalLines[r][c]) count++;
+            if (horizontalLines[r + 1] && horizontalLines[r + 1][c]) count++;
+            if (verticalLines[r] && verticalLines[r][c]) count++;
+            if (verticalLines[r] && verticalLines[r][c+1]) count++;
+            return count;
+        }
+
+        function findLineToCompleteBox() {
+            for (let r = 0; r < GRID_ROWS - 1; r++) {
+                for (let c = 0; c < GRID_COLS - 1; c++) {
+                    if (boxes[r][c] === null) {
+                        if (countSides(r, c) === 3) {
+                            if (!horizontalLines[r][c]) return { type: 'h', r: r, c: c };
+                            if (!horizontalLines[r + 1][c]) return { type: 'h', r: r + 1, c: c };
+                            if (!verticalLines[r][c]) return { type: 'v', r: r, c: c };
+                            if (!verticalLines[r][c + 1]) return { type: 'v', r: r, c: c + 1 };
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        function findSafeLine() {
+            let safeLines = [];
+            for (let r = 0; r < GRID_ROWS; r++) {
+                for (let c = 0; c < GRID_COLS - 1; c++) {
+                    if (!horizontalLines[r][c]) {
+                        let isSafe = true;
+                        horizontalLines[r][c] = 'temp'; 
+                        if (r > 0 && countSides(r - 1, c) === 3) isSafe = false;
+                        if (isSafe && r < GRID_ROWS - 1 && countSides(r, c) === 3) isSafe = false;
+                        horizontalLines[r][c] = null; 
+
+                        if (isSafe) safeLines.push({ type: 'h', r, c });
+                    }
+                }
+            }
+            for (let r = 0; r < GRID_ROWS - 1; r++) {
+                for (let c = 0; c < GRID_COLS; c++) {
+                    if (!verticalLines[r][c]) {
+                        let isSafe = true;
+                        verticalLines[r][c] = 'temp';
+                        if (c > 0 && countSides(r, c - 1) === 3) isSafe = false;
+                        if (isSafe && c < GRID_COLS - 1 && countSides(r, c) === 3) isSafe = false;
+                        verticalLines[r][c] = null;
+
+                        if (isSafe) safeLines.push({ type: 'v', r, c });
+                    }
+                }
+            }
+            if (safeLines.length > 0) return safeLines[Math.floor(Math.random() * safeLines.length)];
+            return null;
+        }
+
+        function findRandomLine() {
+            let available = [];
+            for (let r = 0; r < GRID_ROWS; r++) {
+                for (let c = 0; c < GRID_COLS - 1; c++) {
+                    if (!horizontalLines[r][c]) available.push({ type: 'h', r, c });
+                }
+            }
+            for (let r = 0; r < GRID_ROWS - 1; r++) {
+                for (let c = 0; c < GRID_COLS; c++) {
+                    if (!verticalLines[r][c]) available.push({ type: 'v', r, c });
+                }
+            }
+            if (available.length > 0) return available[Math.floor(Math.random() * available.length)];
+            return null;
+        }
+
+        // --- Intro screen animation logic ---
+        const introImage = document.getElementById('introImage');
+        const introScreenElement = document.getElementById('introScreen');
+        const mainGameContainerElement = document.getElementById('mainGameContainer'); // Get the main game container
+
+        function hideIntroScreen() {
+            introScreenElement.style.opacity = 0; // Start fade out
+            introScreenElement.addEventListener('transitionend', () => {
+                introScreenElement.classList.add('hidden'); // Hide after transition
+                mainGameContainerElement.classList.remove('hidden'); // Show main game content
+                modeSelectionScreen.classList.remove('hidden'); // Show mode selection
+            }, { once: true });
+        }
+
+        // Start the intro animation when the page loads
+        window.onload = function() {
+            setTimeout(hideIntroScreen, 2000); // Show intro for 2 seconds then fade out
+        };
 
 
-            twoPlayerBtn.addEventListener('click', () => initializeGame('two-player'));
-            vsComputerBtn.addEventListener('click', () => initializeGame('vs-computer'));
-            restartBtn.addEventListener('click', () => {
-                showStartScreen();
-            });
-            restartMessageBtn.addEventListener('click', () => {
-                initializeGame(vsComputer ? 'vs-computer' : 'two-player');
-            });
+        // Event Listeners
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('mousedown', handleClick);
+        canvas.addEventListener('touchmove', handleMouseMove);
+        canvas.addEventListener('touchstart', handleClick);
+        selectComputerModeButton.addEventListener('click', selectComputerMode);
+        selectFriendModeButton.addEventListener('click', selectFriendMode);
+        startGameButton.addEventListener('click', handleStartGame);
+        resetButton.addEventListener('click', resetGame);
+        window.addEventListener('resize', () => { if (!gameUI.classList.contains('hidden')) initializeGame(); });
 
-            canvas.addEventListener('mousedown', handleInput);
-            canvas.addEventListener('touchstart', handleInput);
-        });
     </script>
 </body>
 </html>
